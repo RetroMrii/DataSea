@@ -1,0 +1,47 @@
+@baseUrl = http://localhost:5000/api
+@token = paste_token_here
+
+### Register user
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Test User",
+  "email": "test@datasea.dev",
+  "password": "password123"
+}
+
+### Login user
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@datasea.dev",
+  "password": "password123"
+}
+
+### Get current user
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+### Register validation error
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "A",
+  "email": "bad-email",
+  "password": "123"
+}
+
+### Login invalid credentials
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@datasea.dev",
+  "password": "wrong-password"
+}
+
+### Get current user without token
+GET {{baseUrl}}/auth/me
