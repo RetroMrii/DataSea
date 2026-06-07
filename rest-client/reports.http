@@ -68,3 +68,69 @@ Content-Type: text/csv
 
 < ./sample-files/sales-sample.csv
 --DataSeaBoundary--
+### Save report after upload analysis
+POST {{baseUrl}}/reports
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Sales sample analysis",
+  "tags": ["sales", "demo"],
+  "descriptionCategory": "sales",
+  "file": {
+    "originalFileName": "sales-sample.csv",
+    "storedFileName": "1780842142057-160735471-sales-sample.csv",
+    "storedFilePath": "H:\\DataSea\\server\\uploads\\1780842142057-160735471-sales-sample.csv",
+    "mimeType": "text/csv",
+    "fileSize": 500,
+    "fileType": "csv"
+  },
+  "analysis": {
+    "rowCount": 11,
+    "columnCount": 5,
+    "columns": [],
+    "summaryStatistics": {
+      "numeric": [],
+      "categorical": []
+    },
+    "missingValues": {
+      "totalMissingValues": 0,
+      "byColumn": []
+    },
+    "duplicateRowCount": 0,
+    "outlierSummary": {
+      "totalOutliers": 0,
+      "columnsWithOutliers": []
+    },
+    "textualInsights": [],
+    "chartData": [],
+    "tablePreview": {
+      "columns": [],
+      "rows": [],
+      "maxRowsShown": 20
+    }
+  }
+}
+
+### Get my reports
+GET {{baseUrl}}/reports?page=1&limit=10
+Authorization: Bearer {{token}}
+
+### Get report by id
+GET {{baseUrl}}/reports/6a2574e7295614e33642a2b1
+Authorization: Bearer {{token}}
+
+### Update report metadata
+PUT {{baseUrl}}/reports/6a257eb8295614e33642a2b4
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Updated sales analysis",
+  "tags": ["sales", "updated"],
+  "descriptionCategory": "sales"
+}
+
+### Soft delete report
+DELETE {{baseUrl}}/reports/6a257eb8295614e33642a2b4
+Authorization: Bearer {{token}}
