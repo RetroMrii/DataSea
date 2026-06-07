@@ -9,7 +9,7 @@ const logger = require('./middleware/logger');
 const errorHandler = require('./middleware/errorHandler');
 const notFound = require('./middleware/notFound');
 const { apiLimiter } = require('./middleware/rateLimiter');
-
+const reportRoutes = require('./routes/reportRoutes');
 const authRoutes = require('./routes/authRoutes');
 
 const app = express();
@@ -46,6 +46,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/reports', reportRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
