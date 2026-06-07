@@ -1,0 +1,12 @@
+product,category,price,quantity,city
+Laptop,Electronics,3500,2,Tel Aviv
+Mouse,Electronics,120,5,Haifa
+Keyboard,Electronics,250,3,Haifa
+Notebook,Office,20,10,Jerusalem
+Pen,Office,5,50,Tel Aviv
+Desk,Furniture,900,1,Jerusalem
+Chair,Furniture,450,2,Haifa
+Monitor,Electronics,1100,2,Tel Aviv
+Laptop,Electronics,3500,2,Tel Aviv
+Unknown,Office,,4,Tel Aviv
+Enterprise Server,Electronics,50000,1,Tel Aviv

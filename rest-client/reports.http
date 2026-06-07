@@ -7,7 +7,7 @@ Authorization: Bearer {{token}}
 Content-Type: multipart/form-data; boundary=DataSeaBoundary
 
 --DataSeaBoundary
-Content-Disposition: form-data; name="dataset"; filename="sample.csv"
+Content-Disposition: form-data; name="dataset"; filename="sample1.csv"
 Content-Type: text/csv
 
 < ./sample-files/sample1.csv
@@ -56,4 +56,15 @@ Content-Disposition: form-data; name="dataset"; filename="bad.txt"
 Content-Type: text/plain
 
 < ./sample-files/sample3.txt
+--DataSeaBoundary--
+### Upload richer CSV dataset
+POST {{baseUrl}}/reports/upload
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=DataSeaBoundary
+
+--DataSeaBoundary
+Content-Disposition: form-data; name="dataset"; filename="sales-sample.csv"
+Content-Type: text/csv
+
+< ./sample-files/sales-sample.csv
 --DataSeaBoundary--

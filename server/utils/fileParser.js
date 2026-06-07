@@ -137,11 +137,12 @@ const parseUploadedFile = async (file) => {
 
   return {
     fileType,
+    rows,
     rowCount: rows.length,
     columnCount: columns.length,
     columns,
     previewRows: rows.slice(0, 20),
-  };
+    };
 };
 
 module.exports = {
