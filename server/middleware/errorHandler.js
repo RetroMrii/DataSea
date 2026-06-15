@@ -2,6 +2,23 @@ const errorHandler = (err, req, res, next) => {
     const statusCode = err.statusCode || res.statusCode || 500;
     const message = err.message || 'Internal Server Error';
 
+    if (err.name === 'MulterError') {
+        return res.status(400).json({
+            success: false,
+            message: err.message,
+        });
+    }
+
+    if (
+        err.message?.includes('Unsupported file extension') ||
+        err.message?.includes('Unsupported file type')
+    ) {
+        return res.status(400).json({
+            success: false,
+            message: err.message,
+        });
+    }
+
     if (process.env.NODE_ENV === 'development') {
         console.error(err);
     }

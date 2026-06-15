@@ -1,2 +1,10 @@
+@baseUrl = http://localhost:5000/api
+
 ### Health check
-GET http://localhost:5000/api/health
+GET {{baseUrl}}/health
+
+### Root API should return 404
+GET {{baseUrl}}
+
+### Unknown route should return 404
+GET {{baseUrl}}/does-not-exist

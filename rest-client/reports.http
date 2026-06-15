@@ -1,62 +1,7 @@
 @baseUrl = http://localhost:5000/api
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTI1NjYzOGQzMjZhM2E0MWVmZmNiZjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc4MDgzNjA3MSwiZXhwIjoxNzgxNDQwODcxfQ.5YVRjWZlP9IDYSNG2OrXH13-r-h2oAEoHP1xfQLnPks
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTJmZGY1OTVmZjM2ZWE2NmY2OWY1NWYiLCJyb2xlIjoidXNlciIsImlhdCI6MTc4MTUyMjI3MSwiZXhwIjoxNzgyMTI3MDcxfQ.0j8XRybHUMF3jHLJHfARBT_COcbL73frD8xwmtEDyQ8
+@reportId = 6a2fe1d95ff36ea66f69f560
 
-### Upload CSV dataset from file
-POST {{baseUrl}}/reports/upload
-Authorization: Bearer {{token}}
-Content-Type: multipart/form-data; boundary=DataSeaBoundary
-
---DataSeaBoundary
-Content-Disposition: form-data; name="dataset"; filename="sample1.csv"
-Content-Type: text/csv
-
-< ./sample-files/sample1.csv
---DataSeaBoundary--
-
-### Upload JSON dataset from file
-POST {{baseUrl}}/reports/upload
-Authorization: Bearer {{token}}
-Content-Type: multipart/form-data; boundary=DataSeaBoundary
-
---DataSeaBoundary
-Content-Disposition: form-data; name="dataset"; filename="sample.json"
-Content-Type: application/json
-
-< ./sample-files/sample2.json
---DataSeaBoundary--
-### Upload without token should fail
-POST {{baseUrl}}/reports/upload
-Content-Type: multipart/form-data; boundary=DataSeaBoundary
-
---DataSeaBoundary
-Content-Disposition: form-data; name="dataset"; filename="sample.csv"
-Content-Type: text/csv
-
-< ./sample-files/sample1.csv
---DataSeaBoundary--
-### Upload with wrong field name should fail
-POST {{baseUrl}}/reports/upload
-Authorization: Bearer {{token}}
-Content-Type: multipart/form-data; boundary=DataSeaBoundary
-
---DataSeaBoundary
-Content-Disposition: form-data; name="file"; filename="sample1.csv"
-Content-Type: text/csv
-
-< ./sample-files/sample1.csv
---DataSeaBoundary--
-
-### Upload unsupported TXT file should fail
-POST {{baseUrl}}/reports/upload
-Authorization: Bearer {{token}}
-Content-Type: multipart/form-data; boundary=DataSeaBoundary
-
---DataSeaBoundary
-Content-Disposition: form-data; name="dataset"; filename="bad.txt"
-Content-Type: text/plain
-
-< ./sample-files/sample3.txt
---DataSeaBoundary--
 ### Upload richer CSV dataset
 POST {{baseUrl}}/reports/upload
 Authorization: Bearer {{token}}
@@ -68,7 +13,8 @@ Content-Type: text/csv
 
 < ./sample-files/sales-sample.csv
 --DataSeaBoundary--
-### Save report after upload analysis
+
+### Save report using latest upload response
 POST {{baseUrl}}/reports
 Authorization: Bearer {{token}}
 Content-Type: application/json
@@ -79,36 +25,804 @@ Content-Type: application/json
   "descriptionCategory": "sales",
   "file": {
     "originalFileName": "sales-sample.csv",
-    "storedFileName": "1780842142057-160735471-sales-sample.csv",
-    "storedFilePath": "H:\\DataSea\\server\\uploads\\1780842142057-160735471-sales-sample.csv",
+    "storedFileName": "1781522736157-151062826-sales-sample.csv",
+    "storedFilePath": "H:\\DataSea\\server\\uploads\\1781522736157-151062826-sales-sample.csv",
     "mimeType": "text/csv",
-    "fileSize": 500,
+    "fileSize": 406,
     "fileType": "csv"
   },
   "analysis": {
     "rowCount": 11,
     "columnCount": 5,
-    "columns": [],
+    "columns": [
+      {
+        "name": "product",
+        "detectedType": "string",
+        "totalValues": 11,
+        "missingValues": 0,
+        "uniqueValues": 10,
+        "sampleValues": [
+          "Laptop",
+          "Mouse",
+          "Keyboard",
+          "Notebook",
+          "Pen"
+        ]
+      },
+      {
+        "name": "category",
+        "detectedType": "string",
+        "totalValues": 11,
+        "missingValues": 0,
+        "uniqueValues": 3,
+        "sampleValues": [
+          "Electronics",
+          "Electronics",
+          "Electronics",
+          "Office",
+          "Office"
+        ]
+      },
+      {
+        "name": "price",
+        "detectedType": "number",
+        "totalValues": 11,
+        "missingValues": 1,
+        "uniqueValues": 9,
+        "sampleValues": [
+          "3500",
+          "120",
+          "250",
+          "20",
+          "5"
+        ]
+      },
+      {
+        "name": "quantity",
+        "detectedType": "number",
+        "totalValues": 11,
+        "missingValues": 0,
+        "uniqueValues": 7,
+        "sampleValues": [
+          "2",
+          "5",
+          "3",
+          "10",
+          "50"
+        ]
+      },
+      {
+        "name": "city",
+        "detectedType": "string",
+        "totalValues": 11,
+        "missingValues": 0,
+        "uniqueValues": 3,
+        "sampleValues": [
+          "Tel Aviv",
+          "Haifa",
+          "Haifa",
+          "Jerusalem",
+          "Tel Aviv"
+        ]
+      }
+    ],
     "summaryStatistics": {
-      "numeric": [],
-      "categorical": []
+      "numeric": [
+        {
+          "columnName": "price",
+          "values": [
+            3500,
+            120,
+            250,
+            20,
+            5,
+            900,
+            450,
+            1100,
+            3500,
+            50000
+          ],
+          "min": 5,
+          "max": 50000,
+          "average": 5984.5,
+          "median": 675,
+          "mode": "3500",
+          "standardDeviation": 14726.362152615968,
+          "outliers": {
+            "count": 1,
+            "sampleValues": [
+              50000
+            ],
+            "method": "iqr",
+            "lowerBound": -3968.75,
+            "upperBound": 7021.25
+          }
+        },
+        {
+          "columnName": "quantity",
+          "values": [
+            2,
+            5,
+            3,
+            10,
+            50,
+            1,
+            2,
+            2,
+            2,
+            4,
+            1
+          ],
+          "min": 1,
+          "max": 50,
+          "average": 7.454545454545454,
+          "median": 2,
+          "mode": "2",
+          "standardDeviation": 13.673887765064121,
+          "outliers": {
+            "count": 2,
+            "sampleValues": [
+              10,
+              50
+            ],
+            "method": "iqr",
+            "lowerBound": -1.75,
+            "upperBound": 8.25
+          }
+        }
+      ],
+      "categorical": [
+        {
+          "columnName": "product",
+          "values": [
+            {
+              "label": "Laptop",
+              "count": 2,
+              "percentage": 18.181818181818183
+            },
+            {
+              "label": "Mouse",
+              "count": 1,
+              "percentage": 9.090909090909092
+            },
+            {
+              "label": "Keyboard",
+              "count": 1,
+              "percentage": 9.090909090909092
+            },
+            {
+              "label": "Notebook",
+              "count": 1,
+              "percentage": 9.090909090909092
+            },
+            {
+              "label": "Pen",
+              "count": 1,
+              "percentage": 9.090909090909092
+            },
+            {
+              "label": "Desk",
+              "count": 1,
+              "percentage": 9.090909090909092
+            },
+            {
+              "label": "Chair",
+              "count": 1,
+              "percentage": 9.090909090909092
+            },
+            {
+              "label": "Monitor",
+              "count": 1,
+              "percentage": 9.090909090909092
+            },
+            {
+              "label": "Unknown",
+              "count": 1,
+              "percentage": 9.090909090909092
+            },
+            {
+              "label": "Enterprise Server",
+              "count": 1,
+              "percentage": 9.090909090909092
+            }
+          ]
+        },
+        {
+          "columnName": "category",
+          "values": [
+            {
+              "label": "Electronics",
+              "count": 6,
+              "percentage": 54.54545454545454
+            },
+            {
+              "label": "Office",
+              "count": 3,
+              "percentage": 27.27272727272727
+            },
+            {
+              "label": "Furniture",
+              "count": 2,
+              "percentage": 18.181818181818183
+            }
+          ]
+        },
+        {
+          "columnName": "city",
+          "values": [
+            {
+              "label": "Tel Aviv",
+              "count": 6,
+              "percentage": 54.54545454545454
+            },
+            {
+              "label": "Haifa",
+              "count": 3,
+              "percentage": 27.27272727272727
+            },
+            {
+              "label": "Jerusalem",
+              "count": 2,
+              "percentage": 18.181818181818183
+            }
+          ]
+        }
+      ]
     },
     "missingValues": {
-      "totalMissingValues": 0,
-      "byColumn": []
+      "totalMissingValues": 1,
+      "byColumn": [
+        {
+          "columnName": "product",
+          "missingValues": 0,
+          "percentage": 0
+        },
+        {
+          "columnName": "category",
+          "missingValues": 0,
+          "percentage": 0
+        },
+        {
+          "columnName": "price",
+          "missingValues": 1,
+          "percentage": 9.090909090909092
+        },
+        {
+          "columnName": "quantity",
+          "missingValues": 0,
+          "percentage": 0
+        },
+        {
+          "columnName": "city",
+          "missingValues": 0,
+          "percentage": 0
+        }
+      ]
     },
-    "duplicateRowCount": 0,
+    "duplicateRowCount": 1,
     "outlierSummary": {
-      "totalOutliers": 0,
-      "columnsWithOutliers": []
+      "totalOutliers": 3,
+      "columnsWithOutliers": [
+        "price",
+        "quantity"
+      ]
     },
-    "textualInsights": [],
-    "chartData": [],
     "tablePreview": {
-      "columns": [],
-      "rows": [],
+      "columns": [
+        "product",
+        "category",
+        "price",
+        "quantity",
+        "city"
+      ],
+      "rows": [
+        [
+          "Laptop",
+          "Electronics",
+          "3500",
+          "2",
+          "Tel Aviv"
+        ],
+        [
+          "Mouse",
+          "Electronics",
+          "120",
+          "5",
+          "Haifa"
+        ],
+        [
+          "Keyboard",
+          "Electronics",
+          "250",
+          "3",
+          "Haifa"
+        ],
+        [
+          "Notebook",
+          "Office",
+          "20",
+          "10",
+          "Jerusalem"
+        ],
+        [
+          "Pen",
+          "Office",
+          "5",
+          "50",
+          "Tel Aviv"
+        ],
+        [
+          "Desk",
+          "Furniture",
+          "900",
+          "1",
+          "Jerusalem"
+        ],
+        [
+          "Chair",
+          "Furniture",
+          "450",
+          "2",
+          "Haifa"
+        ],
+        [
+          "Monitor",
+          "Electronics",
+          "1100",
+          "2",
+          "Tel Aviv"
+        ],
+        [
+          "Laptop",
+          "Electronics",
+          "3500",
+          "2",
+          "Tel Aviv"
+        ],
+        [
+          "Unknown",
+          "Office",
+          "",
+          "4",
+          "Tel Aviv"
+        ],
+        [
+          "Enterprise Server",
+          "Electronics",
+          "50000",
+          "1",
+          "Tel Aviv"
+        ]
+      ],
       "maxRowsShown": 20
-    }
+    },
+    "textualInsights": [
+      "The dataset contains 11 rows and 5 columns.",
+      "1 duplicate row detected.",
+      "Column \"price\" has the highest missing-value rate at 9.09%.",
+      "Numeric column \"price\" ranges from 5 to 50000.",
+      "3 possible outlier values detected using the IQR method.",
+      "The most common category is \"Electronics\" in \"category\", representing 54.55% of known values."
+    ],
+    "chartData": [
+      {
+        "chartId": "bar-product",
+        "title": "product frequency",
+        "chartType": "bar",
+        "xAxis": "product",
+        "yAxis": "Count",
+        "data": [
+          {
+            "label": "Laptop",
+            "value": 2,
+            "percentage": 18.181818181818183
+          },
+          {
+            "label": "Mouse",
+            "value": 1,
+            "percentage": 9.090909090909092
+          },
+          {
+            "label": "Keyboard",
+            "value": 1,
+            "percentage": 9.090909090909092
+          },
+          {
+            "label": "Notebook",
+            "value": 1,
+            "percentage": 9.090909090909092
+          },
+          {
+            "label": "Pen",
+            "value": 1,
+            "percentage": 9.090909090909092
+          },
+          {
+            "label": "Desk",
+            "value": 1,
+            "percentage": 9.090909090909092
+          },
+          {
+            "label": "Chair",
+            "value": 1,
+            "percentage": 9.090909090909092
+          },
+          {
+            "label": "Monitor",
+            "value": 1,
+            "percentage": 9.090909090909092
+          },
+          {
+            "label": "Unknown",
+            "value": 1,
+            "percentage": 9.090909090909092
+          },
+          {
+            "label": "Enterprise Server",
+            "value": 1,
+            "percentage": 9.090909090909092
+          }
+        ],
+        "isAutoGenerated": true
+      },
+      {
+        "chartId": "bar-category",
+        "title": "category frequency",
+        "chartType": "bar",
+        "xAxis": "category",
+        "yAxis": "Count",
+        "data": [
+          {
+            "label": "Electronics",
+            "value": 6,
+            "percentage": 54.54545454545454
+          },
+          {
+            "label": "Office",
+            "value": 3,
+            "percentage": 27.27272727272727
+          },
+          {
+            "label": "Furniture",
+            "value": 2,
+            "percentage": 18.181818181818183
+          }
+        ],
+        "isAutoGenerated": true
+      },
+      {
+        "chartId": "pie-category",
+        "title": "category distribution",
+        "chartType": "pie",
+        "xAxis": "category",
+        "yAxis": "Percentage",
+        "data": [
+          {
+            "label": "Electronics",
+            "value": 6,
+            "percentage": 54.54545454545454
+          },
+          {
+            "label": "Office",
+            "value": 3,
+            "percentage": 27.27272727272727
+          },
+          {
+            "label": "Furniture",
+            "value": 2,
+            "percentage": 18.181818181818183
+          }
+        ],
+        "isAutoGenerated": true
+      },
+      {
+        "chartId": "histogram-price",
+        "title": "price distribution",
+        "chartType": "histogram",
+        "xAxis": "price",
+        "yAxis": "Frequency",
+        "data": [
+          {
+            "label": "5 - 6254.38",
+            "min": 5,
+            "max": 6254.375,
+            "value": 9
+          },
+          {
+            "label": "6254.38 - 12503.75",
+            "min": 6254.375,
+            "max": 12503.75,
+            "value": 0
+          },
+          {
+            "label": "12503.75 - 18753.13",
+            "min": 12503.75,
+            "max": 18753.125,
+            "value": 0
+          },
+          {
+            "label": "18753.13 - 25002.5",
+            "min": 18753.125,
+            "max": 25002.5,
+            "value": 0
+          },
+          {
+            "label": "25002.5 - 31251.88",
+            "min": 25002.5,
+            "max": 31251.875,
+            "value": 0
+          },
+          {
+            "label": "31251.88 - 37501.25",
+            "min": 31251.875,
+            "max": 37501.25,
+            "value": 0
+          },
+          {
+            "label": "37501.25 - 43750.63",
+            "min": 37501.25,
+            "max": 43750.625,
+            "value": 0
+          },
+          {
+            "label": "43750.63 - 50000",
+            "min": 43750.625,
+            "max": 50000,
+            "value": 1
+          }
+        ],
+        "isAutoGenerated": true
+      },
+      {
+        "chartId": "line-price",
+        "title": "price trend by row order",
+        "chartType": "line",
+        "xAxis": "Row",
+        "yAxis": "price",
+        "data": [
+          {
+            "label": 1,
+            "value": 3500
+          },
+          {
+            "label": 2,
+            "value": 120
+          },
+          {
+            "label": 3,
+            "value": 250
+          },
+          {
+            "label": 4,
+            "value": 20
+          },
+          {
+            "label": 5,
+            "value": 5
+          },
+          {
+            "label": 6,
+            "value": 900
+          },
+          {
+            "label": 7,
+            "value": 450
+          },
+          {
+            "label": 8,
+            "value": 1100
+          },
+          {
+            "label": 9,
+            "value": 3500
+          },
+          {
+            "label": 11,
+            "value": 50000
+          }
+        ],
+        "isAutoGenerated": true
+      },
+      {
+        "chartId": "histogram-quantity",
+        "title": "quantity distribution",
+        "chartType": "histogram",
+        "xAxis": "quantity",
+        "yAxis": "Frequency",
+        "data": [
+          {
+            "label": "1 - 7.13",
+            "min": 1,
+            "max": 7.125,
+            "value": 9
+          },
+          {
+            "label": "7.13 - 13.25",
+            "min": 7.125,
+            "max": 13.25,
+            "value": 1
+          },
+          {
+            "label": "13.25 - 19.38",
+            "min": 13.25,
+            "max": 19.375,
+            "value": 0
+          },
+          {
+            "label": "19.38 - 25.5",
+            "min": 19.375,
+            "max": 25.5,
+            "value": 0
+          },
+          {
+            "label": "25.5 - 31.63",
+            "min": 25.5,
+            "max": 31.625,
+            "value": 0
+          },
+          {
+            "label": "31.63 - 37.75",
+            "min": 31.625,
+            "max": 37.75,
+            "value": 0
+          },
+          {
+            "label": "37.75 - 43.88",
+            "min": 37.75,
+            "max": 43.875,
+            "value": 0
+          },
+          {
+            "label": "43.88 - 50",
+            "min": 43.875,
+            "max": 50,
+            "value": 1
+          }
+        ],
+        "isAutoGenerated": true
+      },
+      {
+        "chartId": "line-quantity",
+        "title": "quantity trend by row order",
+        "chartType": "line",
+        "xAxis": "Row",
+        "yAxis": "quantity",
+        "data": [
+          {
+            "label": 1,
+            "value": 2
+          },
+          {
+            "label": 2,
+            "value": 5
+          },
+          {
+            "label": 3,
+            "value": 3
+          },
+          {
+            "label": 4,
+            "value": 10
+          },
+          {
+            "label": 5,
+            "value": 50
+          },
+          {
+            "label": 6,
+            "value": 1
+          },
+          {
+            "label": 7,
+            "value": 2
+          },
+          {
+            "label": 8,
+            "value": 2
+          },
+          {
+            "label": 9,
+            "value": 2
+          },
+          {
+            "label": 10,
+            "value": 4
+          },
+          {
+            "label": 11,
+            "value": 1
+          }
+        ],
+        "isAutoGenerated": true
+      },
+      {
+        "chartId": "table-preview",
+        "title": "Table preview",
+        "chartType": "table",
+        "xAxis": "",
+        "yAxis": "",
+        "data": [
+          [
+            "Laptop",
+            "Electronics",
+            "3500",
+            "2",
+            "Tel Aviv"
+          ],
+          [
+            "Mouse",
+            "Electronics",
+            "120",
+            "5",
+            "Haifa"
+          ],
+          [
+            "Keyboard",
+            "Electronics",
+            "250",
+            "3",
+            "Haifa"
+          ],
+          [
+            "Notebook",
+            "Office",
+            "20",
+            "10",
+            "Jerusalem"
+          ],
+          [
+            "Pen",
+            "Office",
+            "5",
+            "50",
+            "Tel Aviv"
+          ],
+          [
+            "Desk",
+            "Furniture",
+            "900",
+            "1",
+            "Jerusalem"
+          ],
+          [
+            "Chair",
+            "Furniture",
+            "450",
+            "2",
+            "Haifa"
+          ],
+          [
+            "Monitor",
+            "Electronics",
+            "1100",
+            "2",
+            "Tel Aviv"
+          ],
+          [
+            "Laptop",
+            "Electronics",
+            "3500",
+            "2",
+            "Tel Aviv"
+          ],
+          [
+            "Unknown",
+            "Office",
+            "",
+            "4",
+            "Tel Aviv"
+          ],
+          [
+            "Enterprise Server",
+            "Electronics",
+            "50000",
+            "1",
+            "Tel Aviv"
+          ]
+        ],
+        "isAutoGenerated": true
+      }
+    ]
   }
 }
 
@@ -117,11 +831,11 @@ GET {{baseUrl}}/reports?page=1&limit=10
 Authorization: Bearer {{token}}
 
 ### Get report by id
-GET {{baseUrl}}/reports/6a2574e7295614e33642a2b1
+GET {{baseUrl}}/reports/{{reportId}}
 Authorization: Bearer {{token}}
 
 ### Update report metadata
-PUT {{baseUrl}}/reports/6a257eb8295614e33642a2b4
+PUT {{baseUrl}}/reports/{{reportId}}
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -132,5 +846,9 @@ Content-Type: application/json
 }
 
 ### Soft delete report
-DELETE {{baseUrl}}/reports/6a257eb8295614e33642a2b4
+DELETE {{baseUrl}}/reports/{{reportId}}
+Authorization: Bearer {{token}}
+
+### Get reports after delete
+GET {{baseUrl}}/reports?page=1&limit=10
 Authorization: Bearer {{token}}
