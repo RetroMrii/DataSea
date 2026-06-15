@@ -1,33 +1,178 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+
+import api from '../services/api.js';
 
 const AuthContext = createContext(null);
 
+const TOKEN_KEY = 'datasea_token';
+const USER_KEY = 'datasea_user';
+
+function readStoredUser() {
+  const storedUser = localStorage.getItem(USER_KEY);
+
+  if (!storedUser) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(storedUser);
+  } catch {
+    localStorage.removeItem(USER_KEY);
+    return null;
+  }
+}
+
+function extractUserFromMeResponse(responseData) {
+  return responseData?.data?.user || responseData?.data || responseData?.user || null;
+}
+
+function extractUserFromAuthResponse(responseData) {
+  return responseData?.data?.user || responseData?.user || null;
+}
+
+function extractTokenFromAuthResponse(responseData) {
+  return responseData?.data?.token || responseData?.token || null;
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const storedUser = localStorage.getItem('datasea_user');
+  const [user, setUser] = useState(() => readStoredUser());
+  const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
 
-    if (!storedUser) {
-      return null;
-    }
+  const clearSession = useCallback(() => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    setUser(null);
+  }, []);
 
-    try {
-      return JSON.parse(storedUser);
-    } catch {
-      localStorage.removeItem('datasea_user');
-      return null;
-    }
-  });
+  const saveSession = useCallback((userData, token) => {
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(userData));
+    setUser(userData);
+  }, []);
 
-  const [loading] = useState(false);
+  useEffect(() => {
+    const restoreSession = async () => {
+      const token = localStorage.getItem(TOKEN_KEY);
+
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await api.get('/auth/me');
+        const currentUser = extractUserFromMeResponse(response.data);
+
+        if (!currentUser) {
+          clearSession();
+          return;
+        }
+
+        localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
+        setUser(currentUser);
+      } catch {
+        clearSession();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    restoreSession();
+  }, [clearSession]);
+
+  const login = useCallback(
+    async ({ email, password }) => {
+      setAuthError(null);
+
+      try {
+        const response = await api.post('/auth/login', { email, password });
+        const token = extractTokenFromAuthResponse(response.data);
+        const userData = extractUserFromAuthResponse(response.data);
+
+        if (!token || !userData) {
+          throw new Error('Login response is missing token or user data.');
+        }
+
+        saveSession(userData, token);
+
+        return {
+          user: userData,
+          token,
+        };
+      } catch (error) {
+        const message =
+          error.response?.data?.message ||
+          error.message ||
+          'Login failed. Please try again.';
+
+        setAuthError(message);
+        throw new Error(message);
+      }
+    },
+    [saveSession]
+  );
+
+  const register = useCallback(
+    async ({ name, email, password }) => {
+      setAuthError(null);
+
+      try {
+        const response = await api.post('/auth/register', {
+          name,
+          email,
+          password,
+        });
+
+        const token = extractTokenFromAuthResponse(response.data);
+        const userData = extractUserFromAuthResponse(response.data);
+
+        if (!token || !userData) {
+          throw new Error('Register response is missing token or user data.');
+        }
+
+        saveSession(userData, token);
+
+        return {
+          user: userData,
+          token,
+        };
+      } catch (error) {
+        const message =
+          error.response?.data?.message ||
+          error.message ||
+          'Registration failed. Please try again.';
+
+        setAuthError(message);
+        throw new Error(message);
+      }
+    },
+    [saveSession]
+  );
+
+  const logout = useCallback(() => {
+    clearSession();
+  }, [clearSession]);
 
   const value = useMemo(
     () => ({
       user,
       loading,
+      authError,
       isAuthenticated: Boolean(user),
-      setUser,
+      login,
+      register,
+      logout,
+      clearAuthError: () => setAuthError(null),
     }),
-    [user, loading]
+    [user, loading, authError, login, register, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
