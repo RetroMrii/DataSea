@@ -1,49 +1,43 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import ErrorMessage from '../components/common/ErrorMessage.jsx';
 import LoadingSpinner from '../components/common/LoadingSpinner.jsx';
 import AppLayout from '../components/layout/AppLayout.jsx';
+import ChartsGrid from '../components/reports/ChartsGrid.jsx';
 import InsightList from '../components/reports/InsightList.jsx';
 import ReportMetaPanel from '../components/reports/ReportMetaPanel.jsx';
 import SummaryCard from '../components/reports/SummaryCard.jsx';
-import ChartsGrid from '../components/reports/ChartsGrid.jsx';
 import TablePreview from '../components/reports/TablePreview.jsx';
-import api from '../services/api.js';
+import {
+  clearReportsError,
+  clearSelectedReport,
+  deleteReport,
+  fetchReportById,
+  updateReport,
+} from '../store/slices/reportsSlice.js';
 
 function ReportDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const [report, setReport] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [pageError, setPageError] = useState('');
-  const [actionError, setActionError] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-
-  const fetchReport = useCallback(async () => {
-    setLoading(true);
-    setPageError('');
-
-    try {
-      const response = await api.get(`/reports/${id}`);
-      const loadedReport =
-        response.data?.data?.report || response.data?.report || null;
-
-      setReport(loadedReport);
-    } catch (requestError) {
-      setPageError(
-        requestError.response?.data?.message || 'Could not load this report.'
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+  const {
+    selectedReport: report,
+    detailLoading,
+    updateLoading,
+    deleteLoading,
+    error,
+  } = useSelector((state) => state.reports);
 
   useEffect(() => {
-    fetchReport();
-  }, [fetchReport]);
+    dispatch(fetchReportById(id));
+
+    return () => {
+      dispatch(clearSelectedReport());
+    };
+  }, [dispatch, id]);
 
   const summaryCards = useMemo(() => {
     if (!report) {
@@ -84,25 +78,18 @@ function ReportDetail() {
     ];
   }, [report]);
 
+  const handleRetry = () => {
+    dispatch(clearReportsError());
+    dispatch(fetchReportById(id));
+  };
+
   const handleUpdate = async (updates) => {
-    setSaving(true);
-    setActionError('');
-
-    try {
-      const response = await api.put(`/reports/${id}`, updates);
-      const updatedReport =
-        response.data?.data?.report || response.data?.report || null;
-
-      if (updatedReport) {
-        setReport(updatedReport);
-      }
-    } catch (requestError) {
-      setActionError(
-        requestError.response?.data?.message || 'Could not update the report.'
-      );
-    } finally {
-      setSaving(false);
-    }
+    await dispatch(
+      updateReport({
+        reportId: id,
+        updates,
+      })
+    );
   };
 
   const handleDelete = async () => {
@@ -114,18 +101,10 @@ function ReportDetail() {
       return;
     }
 
-    setDeleting(true);
-    setActionError('');
+    const result = await dispatch(deleteReport(id));
 
-    try {
-      await api.delete(`/reports/${id}`);
+    if (deleteReport.fulfilled.match(result)) {
       navigate('/reports', { replace: true });
-    } catch (requestError) {
-      setActionError(
-        requestError.response?.data?.message || 'Could not delete the report.'
-      );
-    } finally {
-      setDeleting(false);
     }
   };
 
@@ -140,13 +119,13 @@ function ReportDetail() {
         </Link>
       </div>
 
-      {loading && <LoadingSpinner message="Loading report..." />}
+      {detailLoading && <LoadingSpinner message="Loading report..." />}
 
-      {!loading && pageError && (
-        <ErrorMessage message={pageError} onRetry={fetchReport} />
+      {!detailLoading && error && !report && (
+        <ErrorMessage message={error} onRetry={handleRetry} />
       )}
 
-      {!loading && !pageError && report && (
+      {!detailLoading && report && (
         <div className="grid gap-6 xl:grid-cols-[1fr_22rem]">
           <div className="space-y-6">
             <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-6">
@@ -161,7 +140,7 @@ function ReportDetail() {
               </p>
             </div>
 
-            {actionError && <ErrorMessage message={actionError} />}
+            {error && <ErrorMessage message={error} />}
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {summaryCards.map((card) => (
@@ -183,8 +162,8 @@ function ReportDetail() {
 
           <ReportMetaPanel
             report={report}
-            saving={saving}
-            deleting={deleting}
+            saving={updateLoading}
+            deleting={deleteLoading}
             onUpdate={handleUpdate}
             onDelete={handleDelete}
           />

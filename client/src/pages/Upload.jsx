@@ -1,31 +1,48 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 import ErrorMessage from '../components/common/ErrorMessage.jsx';
 import AppLayout from '../components/layout/AppLayout.jsx';
+import ChartsGrid from '../components/reports/ChartsGrid.jsx';
 import InsightList from '../components/reports/InsightList.jsx';
 import RenameReportModal from '../components/reports/RenameReportModal.jsx';
 import SummaryCard from '../components/reports/SummaryCard.jsx';
 import TablePreview from '../components/reports/TablePreview.jsx';
-import ChartsGrid from '../components/reports/ChartsGrid.jsx';
 import FileUploadBox from '../components/upload/FileUploadBox.jsx';
 import UploadProgress from '../components/upload/UploadProgress.jsx';
-import api from '../services/api.js';
+import {
+  clearReportsError,
+  clearUploadPreview,
+  saveReport,
+  uploadDataset,
+} from '../store/slices/reportsSlice.js';
 
 const defaultDescriptionCategory = 'other';
 
 function Upload() {
+  const dispatch = useDispatch();
+
+  const {
+    uploadPreview,
+    savedReport,
+    uploadLoading,
+    saveLoading,
+    uploadProgress,
+    error,
+  } = useSelector((state) => state.reports);
+
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileError, setFileError] = useState('');
-  const [serverError, setServerError] = useState('');
-  const [uploadPreview, setUploadPreview] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [renameModalOpen, setRenameModalOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [savedReport, setSavedReport] = useState(null);
 
   const analysis = uploadPreview?.analysis;
+
+  useEffect(() => {
+    return () => {
+      dispatch(clearReportsError());
+    };
+  }, [dispatch]);
 
   const summaryCards = useMemo(() => {
     if (!analysis) {
@@ -69,9 +86,7 @@ function Upload() {
   const handleFileSelect = (file, errorMessage) => {
     setSelectedFile(file);
     setFileError(errorMessage);
-    setServerError('');
-    setUploadPreview(null);
-    setSavedReport(null);
+    dispatch(clearUploadPreview());
   };
 
   const handleUpload = async () => {
@@ -80,44 +95,9 @@ function Upload() {
       return;
     }
 
-    setUploading(true);
-    setServerError('');
-    setUploadProgress(0);
-    setUploadPreview(null);
-    setSavedReport(null);
-
-    const formData = new FormData();
-    formData.append('dataset', selectedFile);
-
-    try {
-      const response = await api.post('/reports/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        onUploadProgress: (progressEvent) => {
-          if (!progressEvent.total) {
-            setUploadProgress(50);
-            return;
-          }
-
-          const percent = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-
-          setUploadProgress(percent);
-        },
-      });
-
-      setUploadPreview(response.data?.data || null);
-      setUploadProgress(100);
-    } catch (error) {
-      setServerError(
-        error.response?.data?.message ||
-          'Upload failed. Check the file and try again.'
-      );
-    } finally {
-      setUploading(false);
-    }
+    setFileError('');
+    dispatch(clearReportsError());
+    await dispatch(uploadDataset(selectedFile));
   };
 
   const handleOpenSaveModal = () => {
@@ -130,32 +110,21 @@ function Upload() {
 
   const handleSaveReport = async (title) => {
     if (!uploadPreview?.file || !uploadPreview?.analysis) {
-      setServerError('Missing upload analysis data. Upload the file again.');
       return;
     }
 
-    setSaving(true);
-    setServerError('');
-
-    try {
-      const response = await api.post('/reports', {
+    const result = await dispatch(
+      saveReport({
         title,
         tags: [],
         descriptionCategory: defaultDescriptionCategory,
         file: uploadPreview.file,
         analysis: uploadPreview.analysis,
-      });
+      })
+    );
 
-      const report = response.data?.data?.report || response.data?.report;
-      setSavedReport(report);
+    if (saveReport.fulfilled.match(result)) {
       setRenameModalOpen(false);
-    } catch (error) {
-      setServerError(
-        error.response?.data?.message ||
-          'Could not save the report. Please try again.'
-      );
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -182,25 +151,25 @@ function Upload() {
             error={fileError}
           />
 
-          {uploading && <UploadProgress progress={uploadProgress} />}
+          {uploadLoading && <UploadProgress progress={uploadProgress} />}
 
-          {serverError && <ErrorMessage message={serverError} />}
+          {error && <ErrorMessage message={error} />}
 
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
               onClick={handleUpload}
-              disabled={!selectedFile || uploading}
+              disabled={!selectedFile || uploadLoading}
               className="rounded-xl bg-sky-400 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {uploading ? 'Analyzing...' : 'Upload and analyze'}
+              {uploadLoading ? 'Analyzing...' : 'Upload and analyze'}
             </button>
 
             {uploadPreview && (
               <button
                 type="button"
                 onClick={handleOpenSaveModal}
-                disabled={saving}
+                disabled={saveLoading}
                 className="rounded-xl border border-slate-700 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Save report
@@ -275,7 +244,7 @@ function Upload() {
       <RenameReportModal
         open={renameModalOpen}
         initialTitle={uploadPreview?.suggestedTitle || ''}
-        saving={saving}
+        saving={saveLoading}
         onCancel={() => setRenameModalOpen(false)}
         onConfirm={handleSaveReport}
       />

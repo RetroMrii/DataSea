@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 import EmptyState from '../components/common/EmptyState.jsx';
@@ -6,38 +7,32 @@ import ErrorMessage from '../components/common/ErrorMessage.jsx';
 import LoadingSpinner from '../components/common/LoadingSpinner.jsx';
 import AppLayout from '../components/layout/AppLayout.jsx';
 import ReportCard from '../components/reports/ReportCard.jsx';
-import api from '../services/api.js';
+import {
+  clearReportsError,
+  fetchReports,
+} from '../store/slices/reportsSlice.js';
 
 function ReportsList() {
-  const [reports, setReports] = useState([]);
-  const [pagination, setPagination] = useState(null);
+  const dispatch = useDispatch();
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
-  const fetchReports = useCallback(async () => {
-    setLoading(true);
-    setError('');
-
-    try {
-      const response = await api.get(`/reports?page=${page}&limit=10`);
-      const payload = response.data?.data || {};
-
-      setReports(payload.reports || []);
-      setPagination(payload.pagination || null);
-    } catch (requestError) {
-      setError(
-        requestError.response?.data?.message ||
-          'Could not load your saved reports.'
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [page]);
+  const { reports, pagination, listLoading, error } = useSelector(
+    (state) => state.reports
+  );
 
   useEffect(() => {
-    fetchReports();
-  }, [fetchReports]);
+    dispatch(fetchReports({ page, limit: 10 }));
+  }, [dispatch, page]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(clearReportsError());
+    };
+  }, [dispatch]);
+
+  const handleRetry = () => {
+    dispatch(fetchReports({ page, limit: 10 }));
+  };
 
   return (
     <AppLayout>
@@ -61,20 +56,20 @@ function ReportsList() {
         </Link>
       </div>
 
-      {loading && <LoadingSpinner message="Loading reports..." />}
+      {listLoading && <LoadingSpinner message="Loading reports..." />}
 
-      {!loading && error && (
-        <ErrorMessage message={error} onRetry={fetchReports} />
+      {!listLoading && error && (
+        <ErrorMessage message={error} onRetry={handleRetry} />
       )}
 
-      {!loading && !error && reports.length === 0 && (
+      {!listLoading && !error && reports.length === 0 && (
         <EmptyState
           title="No saved reports yet"
           description="Upload and save your first dataset analysis to see it here."
         />
       )}
 
-      {!loading && !error && reports.length > 0 && (
+      {!listLoading && !error && reports.length > 0 && (
         <>
           <div className="space-y-4">
             {reports.map((report) => (
