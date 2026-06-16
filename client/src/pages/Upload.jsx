@@ -7,6 +7,7 @@ import InsightList from '../components/reports/InsightList.jsx';
 import RenameReportModal from '../components/reports/RenameReportModal.jsx';
 import SummaryCard from '../components/reports/SummaryCard.jsx';
 import TablePreview from '../components/reports/TablePreview.jsx';
+import ChartsGrid from '../components/reports/ChartsGrid.jsx';
 import FileUploadBox from '../components/upload/FileUploadBox.jsx';
 import UploadProgress from '../components/upload/UploadProgress.jsx';
 import api from '../services/api.js';
@@ -260,6 +261,8 @@ function Upload() {
                   />
                 ))}
               </div>
+
+              <ChartsGrid charts={analysis.chartData || []} />
 
               <InsightList insights={analysis.textualInsights || []} />
 

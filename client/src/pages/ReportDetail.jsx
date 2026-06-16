@@ -7,6 +7,7 @@ import AppLayout from '../components/layout/AppLayout.jsx';
 import InsightList from '../components/reports/InsightList.jsx';
 import ReportMetaPanel from '../components/reports/ReportMetaPanel.jsx';
 import SummaryCard from '../components/reports/SummaryCard.jsx';
+import ChartsGrid from '../components/reports/ChartsGrid.jsx';
 import TablePreview from '../components/reports/TablePreview.jsx';
 import api from '../services/api.js';
 
@@ -172,6 +173,8 @@ function ReportDetail() {
                 />
               ))}
             </div>
+
+            <ChartsGrid charts={report.chartData || []} />
 
             <InsightList insights={report.textualInsights || []} />
 
