@@ -74,7 +74,7 @@ function ChartPanel({ chart }) {
 
   if (!data.length) {
     return (
-      <section className="rounded-3xl border border-slate-800 bg-slate-950/80 p-6">
+      <section className="min-w-0 overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/80 p-6">
         <h3 className="text-lg font-semibold text-white">
           {chart.title || 'Chart'}
         </h3>
@@ -86,7 +86,7 @@ function ChartPanel({ chart }) {
   }
 
   return (
-    <section className="rounded-3xl border border-slate-800 bg-slate-950/80 p-6">
+    <section className="min-w-0 overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/80 p-6">
       <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-300">
@@ -104,7 +104,7 @@ function ChartPanel({ chart }) {
         )}
       </div>
 
-      <div className="h-80">
+      <div className="h-80 min-w-0 overflow-hidden">
         <ResponsiveContainer width="100%" height="100%">
           {chart.chartType === 'bar' || chart.chartType === 'histogram' ? (
             <BarChart data={data}>

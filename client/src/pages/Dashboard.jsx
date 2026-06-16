@@ -2,24 +2,18 @@ import { Link } from 'react-router-dom';
 
 import AppLayout from '../components/layout/AppLayout.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import PageHeader from '../components/common/PageHeader.jsx';
 
 function Dashboard() {
   const { user } = useAuth();
 
   return (
     <AppLayout>
-      <div className="mb-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-300">
-          Private workspace
-        </p>
-        <h1 className="mt-3 text-3xl font-bold text-white">
-          Welcome{user?.name ? `, ${user.name}` : ''}.
-        </h1>
-        <p className="mt-2 max-w-2xl text-slate-400">
-          Upload structured datasets, generate automatic analysis, and save
-          private visual reports.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Private workspace"
+        title={`Welcome${user?.name ? `, ${user.name}` : ''}.`}
+        description="Upload structured datasets, generate automatic analysis, and save visual reports."
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-6">

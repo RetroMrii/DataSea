@@ -14,7 +14,7 @@ function ChartsGrid({ charts = [] }) {
   }
 
   return (
-    <section>
+    <section className="min-w-0 overflow-hidden">
       <div className="mb-5">
         <h2 className="text-2xl font-bold text-white">Visual analysis</h2>
         <p className="mt-2 text-sm text-slate-400">
@@ -23,7 +23,7 @@ function ChartsGrid({ charts = [] }) {
         </p>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid min-w-0 gap-6 xl:grid-cols-2">
         {visualCharts.map((chart) => (
           <ChartPanel key={chart.chartId || chart.title} chart={chart} />
         ))}

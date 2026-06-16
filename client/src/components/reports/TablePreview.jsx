@@ -14,7 +14,7 @@ function TablePreview({ tablePreview }) {
   }
 
   return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-6">
+    <div className="min-w-0 overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/80 p-6">
       <div className="mb-5 flex items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-semibold text-white">Table preview</h2>
@@ -24,7 +24,7 @@ function TablePreview({ tablePreview }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-slate-800">
+      <div className="max-w-full overflow-x-auto rounded-2xl border border-slate-800">
         <table className="min-w-full divide-y divide-slate-800 text-left text-sm">
           <thead className="bg-slate-900">
             <tr>

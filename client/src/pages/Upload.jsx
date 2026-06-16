@@ -9,6 +9,7 @@ import InsightList from '../components/reports/InsightList.jsx';
 import RenameReportModal from '../components/reports/RenameReportModal.jsx';
 import SummaryCard from '../components/reports/SummaryCard.jsx';
 import TablePreview from '../components/reports/TablePreview.jsx';
+import PageHeader from '../components/common/PageHeader.jsx';
 import FileUploadBox from '../components/upload/FileUploadBox.jsx';
 import UploadProgress from '../components/upload/UploadProgress.jsx';
 import {
@@ -130,21 +131,14 @@ function Upload() {
 
   return (
     <AppLayout>
-      <div className="mb-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-300">
-          Upload and analyze
-        </p>
-        <h1 className="mt-3 text-3xl font-bold text-white">
-          Generate a private report
-        </h1>
-        <p className="mt-2 max-w-3xl text-slate-400">
-          Upload a structured file. DataSea will analyze the dataset and show a
-          preview before saving anything to your report history.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Upload and analyze"
+        title="Generate a report"
+        description="Upload a structured file. DataSea will analyze the dataset and show a preview before saving anything to your report history."
+      />
 
-      <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <div className="space-y-4">
+      <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <div className="min-w-0 space-y-4">
           <FileUploadBox
             selectedFile={selectedFile}
             onFileSelect={handleFileSelect}
@@ -194,7 +188,7 @@ function Upload() {
           )}
         </div>
 
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           {!uploadPreview && (
             <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-8">
               <h2 className="text-xl font-semibold text-white">

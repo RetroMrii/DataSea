@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 import EmptyState from '../components/common/EmptyState.jsx';
+import PageHeader from '../components/common/PageHeader.jsx';
 import ErrorMessage from '../components/common/ErrorMessage.jsx';
 import LoadingSpinner from '../components/common/LoadingSpinner.jsx';
 import AppLayout from '../components/layout/AppLayout.jsx';
@@ -36,25 +37,19 @@ function ReportsList() {
 
   return (
     <AppLayout>
-      <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-300">
-            Report history
-          </p>
-          <h1 className="mt-3 text-3xl font-bold text-white">Saved reports</h1>
-          <p className="mt-2 max-w-2xl text-slate-400">
-            Open previously saved analysis reports. Deleted reports are hidden
-            from this list but remain soft-deleted in MongoDB.
-          </p>
-        </div>
-
-        <Link
-          to="/upload"
-          className="inline-flex rounded-xl bg-sky-400 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-sky-300"
-        >
-          Upload new file
-        </Link>
-      </div>
+      <PageHeader
+        eyebrow="Report history"
+        title="Saved reports"
+        description="Open previously saved analysis reports. Deleted reports are hidden from this list but remain soft-deleted in MongoDB."
+        action={
+          <Link
+            to="/upload"
+            className="inline-flex rounded-xl bg-sky-400 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-sky-300"
+          >
+            Upload new file
+          </Link>
+        }
+      />
 
       {listLoading && <LoadingSpinner message="Loading reports..." />}
 
@@ -66,6 +61,14 @@ function ReportsList() {
         <EmptyState
           title="No saved reports yet"
           description="Upload and save your first dataset analysis to see it here."
+          action={
+            <Link
+              to="/upload"
+              className="inline-flex rounded-xl bg-sky-400 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-sky-300"
+            >
+              Upload first file
+            </Link>
+          }
         />
       )}
 

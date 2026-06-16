@@ -23,7 +23,7 @@ function Sidebar() {
             key={link.to}
             to={link.to}
             className={({ isActive }) =>
-              `block rounded-xl px-4 py-3 text-sm font-medium ${
+              `block rounded-xl px-4 py-3 text-sm font-medium transition ${
                 isActive
                   ? 'bg-sky-500 text-slate-950'
                   : 'text-slate-300 hover:bg-slate-900 hover:text-white'
@@ -34,6 +34,13 @@ function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+        <p className="text-sm font-semibold text-white">MVP scope</p>
+        <p className="mt-2 text-xs leading-5 text-slate-400">
+          CSV, JSON, and XLSX analytics with private saved reports.
+        </p>
+      </div>
     </aside>
   );
 }

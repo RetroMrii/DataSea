@@ -1,10 +1,11 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import ErrorMessage from '../components/common/ErrorMessage.jsx';
 import LoadingSpinner from '../components/common/LoadingSpinner.jsx';
 import AppLayout from '../components/layout/AppLayout.jsx';
+import ConfirmDialog from '../components/common/ConfirmDialog.jsx';
 import ChartsGrid from '../components/reports/ChartsGrid.jsx';
 import InsightList from '../components/reports/InsightList.jsx';
 import ReportMetaPanel from '../components/reports/ReportMetaPanel.jsx';
@@ -38,6 +39,8 @@ function ReportDetail() {
       dispatch(clearSelectedReport());
     };
   }, [dispatch, id]);
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const summaryCards = useMemo(() => {
     if (!report) {
@@ -93,17 +96,10 @@ function ReportDetail() {
   };
 
   const handleDelete = async () => {
-    const confirmed = window.confirm(
-      'Delete this report from your history? This uses soft delete and keeps the database record.'
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
     const result = await dispatch(deleteReport(id));
 
     if (deleteReport.fulfilled.match(result)) {
+      setDeleteDialogOpen(false);
       navigate('/reports', { replace: true });
     }
   };
@@ -126,8 +122,8 @@ function ReportDetail() {
       )}
 
       {!detailLoading && report && (
-        <div className="grid gap-6 xl:grid-cols-[1fr_22rem]">
-          <div className="space-y-6">
+        <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+          <div className="min-w-0 space-y-6">
             <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-6">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-300">
                 Saved report
@@ -165,10 +161,20 @@ function ReportDetail() {
             saving={updateLoading}
             deleting={deleteLoading}
             onUpdate={handleUpdate}
-            onDelete={handleDelete}
+            onDelete={() => setDeleteDialogOpen(true)}
           />
         </div>
       )}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        title="Delete report from history?"
+        description="You Can't bring the report back unless reupload the original file."
+        confirmLabel="Delete report"
+        danger
+        loading={deleteLoading}
+        onCancel={() => setDeleteDialogOpen(false)}
+        onConfirm={handleDelete}
+      />
     </AppLayout>
   );
 }

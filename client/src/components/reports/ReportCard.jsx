@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import StatusBadge from '../common/StatusBadge.jsx';
 
 function formatDate(dateValue) {
   if (!dateValue) {
@@ -29,18 +30,28 @@ function formatFileSize(bytes) {
 
 function ReportCard({ report }) {
   return (
-    <article className="rounded-3xl border border-slate-800 bg-slate-950/80 p-6 transition hover:border-sky-500/50 hover:bg-slate-950">
+    <article className="min-w-0 overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/80 p-6 transition hover:border-sky-500/50 hover:bg-slate-950">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-300">
-            {report.fileType?.toUpperCase() || 'DATASET'}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge variant="info">
+              {report.fileType?.toUpperCase() || 'DATASET'}
+            </StatusBadge>
 
-          <h2 className="mt-3 text-xl font-semibold text-white">
+            {report.descriptionCategory && (
+              <StatusBadge>{report.descriptionCategory}</StatusBadge>
+            )}
+
+            {report.isOriginalFileAvailable === false && (
+              <StatusBadge variant="warning">File expired</StatusBadge>
+            )}
+          </div>
+
+          <h2 className="mt-3 break-words text-xl font-semibold text-white">
             {report.title}
           </h2>
 
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 break-all text-sm text-slate-400">
             {report.originalFileName}
           </p>
         </div>
