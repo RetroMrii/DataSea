@@ -20,6 +20,14 @@ build/
 # Uploaded files
 server/uploads/*
 !server/uploads/.gitkeep
+node_modules
+.env
+.env.local
+dist
+build
+coverage
+uploads
+.DS_Store
 
 # Logs
 *.log
