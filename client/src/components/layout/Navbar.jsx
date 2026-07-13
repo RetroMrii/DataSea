@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import Logo from '../common/Logo';
+import Logo from '../common/logo';
 import { useAuth } from '../../context/AuthContext.jsx';
 
 const publicLinks = [

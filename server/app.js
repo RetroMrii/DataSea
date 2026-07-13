@@ -46,6 +46,14 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api', apiLimiter);
 
+app.get('/', (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: 'DataSea API is running.',
+        health: '/api/health',
+    });
+});
+
 app.get('/api/health', (req, res) => {
     res.status(200).json({
         success: true,
