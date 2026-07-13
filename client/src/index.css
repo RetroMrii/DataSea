@@ -35,7 +35,19 @@ textarea {
   font: inherit;
 }
 
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
 a {
   color: inherit;
   text-decoration: none;
+}
+
+::selection {
+  background: rgba(14, 165, 233, 0.35);
 }

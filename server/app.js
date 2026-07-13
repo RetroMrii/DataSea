@@ -16,9 +16,21 @@ const app = express();
 
 app.use(helmet());
 
+const allowedOrigins = [
+    process.env.CLIENT_URL || 'http://localhost:5173',
+    process.env.CLIENT_URL_PRODUCTION,
+].filter(Boolean);
+
 app.use(
     cors({
-        origin: process.env.CLIENT_URL || 'http://localhost:5173',
+        origin(origin, callback) {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+                return;
+            }
+
+            callback(new Error('Not allowed by CORS'));
+        },
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
         allowedHeaders: ['Content-Type', 'Authorization'],

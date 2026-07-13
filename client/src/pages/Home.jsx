@@ -9,7 +9,7 @@ function Home() {
         </p>
 
         <h1 className="max-w-4xl text-4xl font-bold tracking-tight text-white sm:text-6xl">
-          Understand structured data files without reading every row.
+          Understand your data without reading every row.
         </h1>
 
         <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
