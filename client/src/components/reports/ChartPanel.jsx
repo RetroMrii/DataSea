@@ -1,11 +1,13 @@
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
+  Label,
   Legend,
   Line,
-  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -14,23 +16,35 @@ import {
   YAxis,
 } from 'recharts';
 
+import { usePreferences } from '../../context/PreferencesContext.jsx';
+import StatusBadge from '../common/StatusBadge.jsx';
+
 const chartColors = [
   '#38bdf8',
+  '#22d3ee',
   '#818cf8',
   '#34d399',
   '#fbbf24',
-  '#fb7185',
   '#a78bfa',
-  '#22d3ee',
+  '#fb7185',
   '#f97316',
 ];
 
-function normalizeChartData(chart) {
-  if (!Array.isArray(chart?.data)) {
-    return [];
+function formatNumber(value) {
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) {
+    return '0';
   }
 
-  if (chart.chartType === 'table') {
+  return new Intl.NumberFormat('en', {
+    notation: Math.abs(number) >= 10000 ? 'compact' : 'standard',
+    maximumFractionDigits: 2,
+  }).format(number);
+}
+
+function normalizeChartData(chart) {
+  if (!Array.isArray(chart?.data) || chart.chartType === 'table') {
     return [];
   }
 
@@ -39,10 +53,18 @@ function normalizeChartData(chart) {
       name: String(item.label ?? `Item ${index + 1}`),
       value: Number(item.value ?? 0),
       percentage: Number(item.percentage ?? 0),
-      min: item.min,
-      max: item.max,
+      min: Number(item.min),
+      max: Number(item.max),
     }))
     .filter((item) => Number.isFinite(item.value));
+}
+
+function truncateLabel(value, maxLength = 18) {
+  const text = String(value ?? '');
+
+  return text.length > maxLength
+    ? `${text.slice(0, maxLength - 1)}…`
+    : text;
 }
 
 function ChartTooltip({ active, payload, label }) {
@@ -51,22 +73,50 @@ function ChartTooltip({ active, payload, label }) {
   }
 
   const item = payload[0]?.payload;
+  const value = payload[0]?.value;
 
   return (
-    <div className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm shadow-xl">
-      <p className="font-semibold text-white">{label || item?.name}</p>
-      <p className="mt-1 text-sky-300">Value: {payload[0].value}</p>
-      {Number.isFinite(item?.percentage) && item.percentage > 0 && (
-        <p className="text-slate-400">
-          Percentage: {item.percentage.toFixed(2)}%
-        </p>
-      )}
+    <div className="min-w-40 rounded-2xl border border-slate-700/80 bg-slate-950/95 px-4 py-3 shadow-2xl shadow-black/40 backdrop-blur">
+      <p className="max-w-56 break-words text-sm font-semibold text-white">
+        {label || item?.name}
+      </p>
+
+      <div className="mt-2 flex items-center justify-between gap-5">
+        <span className="text-xs text-slate-400">
+          Value
+        </span>
+
+        <span className="text-sm font-semibold text-sky-300">
+          {formatNumber(value)}
+        </span>
+      </div>
+
+      {Number.isFinite(item?.percentage) &&
+        item.percentage > 0 && (
+          <div className="mt-1 flex items-center justify-between gap-5">
+            <span className="text-xs text-slate-400">
+              Share
+            </span>
+
+            <span className="text-sm font-medium text-slate-200">
+              {item.percentage.toFixed(1)}%
+            </span>
+          </div>
+        )}
     </div>
   );
 }
 
-function ChartPanel({ chart }) {
+function ChartPanel({
+  chart,
+  featured = false,
+  compact = false,
+}) {
+  const { preferences } = usePreferences();
+
   const data = normalizeChartData(chart);
+  const chartAnimationsEnabled =
+    preferences.interfaceMotion;
 
   if (!chart || chart.chartType === 'table') {
     return null;
@@ -74,99 +124,460 @@ function ChartPanel({ chart }) {
 
   if (!data.length) {
     return (
-      <section className="min-w-0 overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/80 p-6">
-        <h3 className="text-lg font-semibold text-white">
+      <section className="rounded-3xl border border-slate-800/80 bg-slate-950/70 p-6 shadow-xl shadow-slate-950/20">
+        <StatusBadge variant="warning">
+          No chart data
+        </StatusBadge>
+
+        <h3 className="mt-4 text-lg font-semibold text-white">
           {chart.title || 'Chart'}
         </h3>
-        <p className="mt-2 text-sm text-slate-400">
-          This chart does not contain renderable numeric data.
+
+        <p className="mt-2 text-sm leading-6 text-slate-400">
+          This chart does not contain renderable numeric values.
         </p>
       </section>
     );
   }
 
+  const total = data.reduce(
+    (sum, item) => sum + item.value,
+    0
+  );
+
+  const longLabels = data.some(
+    (item) => item.name.length > 14
+  );
+
+  const chartHeight = compact
+    ? 'h-64'
+    : featured
+      ? 'h-[26rem]'
+      : 'h-80';
+
+  const chartType = chart.chartType?.toLowerCase();
+  const isBar =
+    chartType === 'bar' || chartType === 'histogram';
+  const isLine = chartType === 'line';
+  const isPie = chartType === 'pie';
+
   return (
-    <section className="min-w-0 overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/80 p-6">
-      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-300">
-            {chart.chartType}
-          </p>
-          <h3 className="mt-2 text-lg font-semibold text-white">
-            {chart.title || 'Untitled chart'}
-          </h3>
+    <section
+      className={`relative min-w-0 overflow-hidden rounded-3xl border border-slate-800/80 bg-slate-950/70 shadow-xl shadow-slate-950/20 backdrop-blur transition hover:border-slate-700 ${featured ? 'p-6 sm:p-7' : 'p-5 sm:p-6'
+        }`}
+    >
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(14,165,233,0.08),transparent_22rem)]" />
+
+      <div className="relative">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge variant="info">
+                {chartType || 'chart'}
+              </StatusBadge>
+
+              {featured && (
+                <StatusBadge variant="success" showDot>
+                  Featured
+                </StatusBadge>
+              )}
+
+              {chart.isAutoGenerated && (
+                <StatusBadge variant="neutral">
+                  Auto generated
+                </StatusBadge>
+              )}
+            </div>
+
+            <h3 className="mt-4 break-words text-lg font-semibold tracking-tight text-white sm:text-xl">
+              {chart.title || 'Untitled chart'}
+            </h3>
+
+            <p className="mt-2 text-sm leading-6 text-slate-400">
+              {data.length} data point
+              {data.length === 1 ? '' : 's'} visualized
+              {Number.isFinite(total)
+                ? ` · Total ${formatNumber(total)}`
+                : ''}
+            </p>
+          </div>
         </div>
 
-        {chart.isAutoGenerated && (
-          <span className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-300">
-            Auto generated
-          </span>
-        )}
-      </div>
+        <div className={`${chartHeight} min-w-0`}>
+          <ResponsiveContainer width="100%" height="100%">
+            {isBar ? (
+              longLabels && data.length <= 12 ? (
+                <BarChart
+                  data={data}
+                  layout="vertical"
+                  margin={{
+                    top: 10,
+                    right: 18,
+                    bottom: 10,
+                    left: 26,
+                  }}
+                >
+                  <defs>
+                    <linearGradient
+                      id="barGradientHorizontal"
+                      x1="0"
+                      y1="0"
+                      x2="1"
+                      y2="0"
+                    >
+                      <stop
+                        offset="0%"
+                        stopColor="#0ea5e9"
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor="#22d3ee"
+                      />
+                    </linearGradient>
+                  </defs>
 
-      <div className="h-80 min-w-0 overflow-hidden">
-        <ResponsiveContainer width="100%" height="100%">
-          {chart.chartType === 'bar' || chart.chartType === 'histogram' ? (
-            <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis
-                dataKey="name"
-                stroke="#94a3b8"
-                tick={{ fontSize: 12 }}
-                interval={0}
-                angle={data.length > 5 ? -20 : 0}
-                textAnchor={data.length > 5 ? 'end' : 'middle'}
-                height={data.length > 5 ? 70 : 40}
-              />
-              <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} />
-              <Tooltip content={<ChartTooltip />} />
-              <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="#38bdf8" />
-            </BarChart>
-          ) : chart.chartType === 'line' ? (
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-              <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} />
-              <Tooltip content={<ChartTooltip />} />
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke="#38bdf8"
-                strokeWidth={3}
-                dot={{ r: 4, fill: '#38bdf8' }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          ) : chart.chartType === 'pie' ? (
-            <PieChart>
-              <Tooltip content={<ChartTooltip />} />
-              <Legend />
-              <Pie
-                data={data}
-                dataKey="value"
-                nameKey="name"
-                outerRadius={105}
-                innerRadius={45}
-                paddingAngle={3}
-              >
-                {data.map((entry, index) => (
-                  <Cell
-                    key={entry.name}
-                    fill={chartColors[index % chartColors.length]}
+                  <CartesianGrid
+                    stroke="#1e293b"
+                    strokeDasharray="4 6"
+                    horizontal={false}
                   />
-                ))}
-              </Pie>
-            </PieChart>
-          ) : (
-            <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-              <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} />
-              <Tooltip content={<ChartTooltip />} />
-              <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="#38bdf8" />
-            </BarChart>
-          )}
-        </ResponsiveContainer>
+
+                  <XAxis
+                    type="number"
+                    stroke="#64748b"
+                    tick={{
+                      fontSize: 11,
+                      fill: '#94a3b8',
+                    }}
+                    tickFormatter={formatNumber}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    width={110}
+                    stroke="#64748b"
+                    tick={{
+                      fontSize: 11,
+                      fill: '#cbd5e1',
+                    }}
+                    tickFormatter={(value) =>
+                      truncateLabel(value, 16)
+                    }
+                    axisLine={false}
+                    tickLine={false}
+                  />
+
+                  <Tooltip
+                    content={<ChartTooltip />}
+                    cursor={{ fill: '#0f172a' }}
+                  />
+
+                  <Bar
+                    dataKey="value"
+                    fill="url(#barGradientHorizontal)"
+                    radius={[0, 8, 8, 0]}
+                    maxBarSize={28}
+                    isAnimationActive={
+                      chartAnimationsEnabled
+                    }
+                  />
+                </BarChart>
+              ) : (
+                <BarChart
+                  data={data}
+                  margin={{
+                    top: 10,
+                    right: 12,
+                    bottom: longLabels ? 34 : 10,
+                    left: 0,
+                  }}
+                >
+                  <defs>
+                    <linearGradient
+                      id="barGradientVertical"
+                      x1="0"
+                      y1="1"
+                      x2="0"
+                      y2="0"
+                    >
+                      <stop
+                        offset="0%"
+                        stopColor="#0284c7"
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor="#38bdf8"
+                      />
+                    </linearGradient>
+                  </defs>
+
+                  <CartesianGrid
+                    stroke="#1e293b"
+                    strokeDasharray="4 6"
+                    vertical={false}
+                  />
+
+                  <XAxis
+                    dataKey="name"
+                    stroke="#64748b"
+                    tick={{
+                      fontSize: 11,
+                      fill: '#94a3b8',
+                    }}
+                    tickFormatter={(value) =>
+                      truncateLabel(value, 12)
+                    }
+                    angle={longLabels ? -25 : 0}
+                    textAnchor={
+                      longLabels ? 'end' : 'middle'
+                    }
+                    axisLine={false}
+                    tickLine={false}
+                  />
+
+                  <YAxis
+                    stroke="#64748b"
+                    tick={{
+                      fontSize: 11,
+                      fill: '#94a3b8',
+                    }}
+                    tickFormatter={formatNumber}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+
+                  <Tooltip
+                    content={<ChartTooltip />}
+                    cursor={{ fill: '#0f172a' }}
+                  />
+
+                  <Bar
+                    dataKey="value"
+                    fill="url(#barGradientVertical)"
+                    radius={[8, 8, 2, 2]}
+                    maxBarSize={46}
+                    isAnimationActive={
+                      chartAnimationsEnabled
+                    }
+                  />
+                </BarChart>
+              )
+            ) : isLine ? (
+              <AreaChart
+                data={data}
+                margin={{
+                  top: 12,
+                  right: 18,
+                  bottom: 12,
+                  left: 0,
+                }}
+              >
+                <defs>
+                  <linearGradient
+                    id="lineAreaGradient"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="0%"
+                      stopColor="#38bdf8"
+                      stopOpacity={0.34}
+                    />
+                    <stop
+                      offset="100%"
+                      stopColor="#38bdf8"
+                      stopOpacity={0.02}
+                    />
+                  </linearGradient>
+                </defs>
+
+                <CartesianGrid
+                  stroke="#1e293b"
+                  strokeDasharray="4 6"
+                  vertical={false}
+                />
+
+                <XAxis
+                  dataKey="name"
+                  stroke="#64748b"
+                  tick={{
+                    fontSize: 11,
+                    fill: '#94a3b8',
+                  }}
+                  tickFormatter={(value) =>
+                    truncateLabel(value, 12)
+                  }
+                  axisLine={false}
+                  tickLine={false}
+                />
+
+                <YAxis
+                  stroke="#64748b"
+                  tick={{
+                    fontSize: 11,
+                    fill: '#94a3b8',
+                  }}
+                  tickFormatter={formatNumber}
+                  axisLine={false}
+                  tickLine={false}
+                />
+
+                <Tooltip content={<ChartTooltip />} />
+
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="none"
+                  fill="url(#lineAreaGradient)"
+                  isAnimationActive={
+                    chartAnimationsEnabled
+                  }
+                />
+
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#38bdf8"
+                  strokeWidth={3}
+                  dot={{
+                    r: 3,
+                    fill: '#38bdf8',
+                    strokeWidth: 0,
+                  }}
+                  activeDot={{
+                    r: 6,
+                    fill: '#e0f2fe',
+                    stroke: '#38bdf8',
+                    strokeWidth: 3,
+                  }}
+                  isAnimationActive={
+                    chartAnimationsEnabled
+                  }
+                />
+              </AreaChart>
+            ) : isPie ? (
+              <PieChart>
+                <Tooltip content={<ChartTooltip />} />
+
+                <Legend
+                  verticalAlign="bottom"
+                  iconType="circle"
+                  formatter={(value) => (
+                    <span className="text-xs text-slate-300">
+                      {truncateLabel(value, 18)}
+                    </span>
+                  )}
+                />
+
+                <Pie
+                  data={data}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius="52%"
+                  outerRadius="76%"
+                  paddingAngle={0}
+                  stroke="none"
+                  isAnimationActive={
+                    chartAnimationsEnabled
+                  }
+                >
+                  {data.map((entry, index) => (
+                    <Cell
+                      key={`${entry.name}-${index}`}
+                      fill={
+                        chartColors[
+                        index % chartColors.length
+                        ]
+                      }
+                    />
+                  ))}
+
+                  <Label
+                    position="center"
+                    content={({ viewBox }) => {
+                      const { cx, cy } = viewBox || {};
+
+                      return (
+                        <g>
+                          <text
+                            x={cx}
+                            y={cy - 6}
+                            textAnchor="middle"
+                            fill="#ffffff"
+                            fontSize="22"
+                            fontWeight="700"
+                          >
+                            {formatNumber(total)}
+                          </text>
+
+                          <text
+                            x={cx}
+                            y={cy + 16}
+                            textAnchor="middle"
+                            fill="#94a3b8"
+                            fontSize="11"
+                          >
+                            total
+                          </text>
+                        </g>
+                      );
+                    }}
+                  />
+                </Pie>
+              </PieChart>
+            ) : (
+              <BarChart data={data}>
+                <CartesianGrid
+                  stroke="#1e293b"
+                  strokeDasharray="4 6"
+                  vertical={false}
+                />
+
+                <XAxis
+                  dataKey="name"
+                  stroke="#64748b"
+                  tick={{
+                    fontSize: 11,
+                    fill: '#94a3b8',
+                  }}
+                  tickFormatter={(value) =>
+                    truncateLabel(value, 12)
+                  }
+                  axisLine={false}
+                  tickLine={false}
+                />
+
+                <YAxis
+                  stroke="#64748b"
+                  tick={{
+                    fontSize: 11,
+                    fill: '#94a3b8',
+                  }}
+                  tickFormatter={formatNumber}
+                  axisLine={false}
+                  tickLine={false}
+                />
+
+                <Tooltip content={<ChartTooltip />} />
+
+                <Bar
+                  dataKey="value"
+                  radius={[8, 8, 2, 2]}
+                  fill="#38bdf8"
+                  maxBarSize={46}
+                  isAnimationActive={
+                    chartAnimationsEnabled
+                  }
+                />
+              </BarChart>
+            )}
+          </ResponsiveContainer>
+        </div>
       </div>
     </section>
   );

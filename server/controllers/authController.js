@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
+
 const User = require('../models/User');
+const AnalysisReport = require('../models/AnalysisReport');
 const asyncHandler = require('../utils/asyncHandler');
 
 const generateToken = (user) => {
@@ -25,6 +27,57 @@ const buildUserResponse = (user) => {
         settings: user.settings,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
+    };
+};
+
+const normalizeName = (value) => {
+    return String(value || '').trim().toLowerCase();
+};
+
+const verifyUserConfirmation = async ({
+    userId,
+    submittedName,
+    password,
+}) => {
+    if (!submittedName || !password) {
+        return {
+            success: false,
+            status: 400,
+            message: 'Account name and password are required.',
+        };
+    }
+
+    const user = await User.findById(userId).select('+password');
+
+    if (!user) {
+        return {
+            success: false,
+            status: 404,
+            message: 'User account not found.',
+        };
+    }
+
+    if (normalizeName(submittedName) !== normalizeName(user.name)) {
+        return {
+            success: false,
+            status: 400,
+            message: 'The submitted account name does not match.',
+        };
+    }
+
+    const passwordMatches = await user.matchPassword(password);
+
+    if (!passwordMatches) {
+        return {
+            success: false,
+            status: 401,
+            message: 'The submitted password is incorrect.',
+        };
+    }
+
+    return {
+        success: true,
+        user,
     };
 };
 
@@ -101,8 +154,44 @@ const getMe = asyncHandler(async (req, res) => {
     });
 });
 
+const deleteAccount = asyncHandler(async (req, res) => {
+    const { name, password } = req.body;
+
+    const verification = await verifyUserConfirmation({
+        userId: req.user._id,
+        submittedName: name,
+        password,
+    });
+
+    if (!verification.success) {
+        return res.status(verification.status).json({
+            success: false,
+            message: verification.message,
+        });
+    }
+
+    const userId = verification.user._id;
+
+    const reportDeletionResult = await AnalysisReport.deleteMany({
+        owner: userId,
+    });
+
+    await User.deleteOne({
+        _id: userId,
+    });
+
+    return res.status(200).json({
+        success: true,
+        message: 'Account and associated reports deleted successfully.',
+        data: {
+            deletedReports: reportDeletionResult.deletedCount || 0,
+        },
+    });
+});
+
 module.exports = {
     register,
     login,
     getMe,
+    deleteAccount,
 };

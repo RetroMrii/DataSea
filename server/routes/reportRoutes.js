@@ -4,6 +4,7 @@ const { protect } = require('../middleware/authMiddleware');
 const { uploadDataset } = require('../middleware/upload');
 const validateObjectId = require('../middleware/validateObjectId');
 const validate = require('../middleware/validate');
+
 const {
   saveReportSchema,
   updateReportSchema,
@@ -16,18 +17,24 @@ const {
   getReportById,
   updateReport,
   softDeleteReport,
+  softDeleteAllReports,
 } = require('../controllers/reportController');
 
 const router = express.Router();
 
 router.use(protect);
 
-router.post('/upload', uploadDataset.single('dataset'), uploadAndParseReport);
+router.post(
+  '/upload',
+  uploadDataset.single('dataset'),
+  uploadAndParseReport
+);
 
 router
   .route('/')
   .get(getMyReports)
-  .post(validate(saveReportSchema), saveReport);
+  .post(validate(saveReportSchema), saveReport)
+  .delete(softDeleteAllReports);
 
 router
   .route('/:id')

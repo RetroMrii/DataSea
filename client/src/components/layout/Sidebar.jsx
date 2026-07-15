@@ -33,13 +33,6 @@ function Sidebar() {
           </NavLink>
         ))}
       </nav>
-
-      <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-        <p className="text-sm font-semibold text-white">MVP scope</p>
-        <p className="mt-2 text-xs leading-5 text-slate-400">
-          CSV, JSON, and XLSX analytics with private saved reports.
-        </p>
-      </div>
     </aside >
   );
 }

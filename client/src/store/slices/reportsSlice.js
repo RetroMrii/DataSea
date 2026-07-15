@@ -1,4 +1,7 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import {
+  createAsyncThunk,
+  createSlice,
+} from '@reduxjs/toolkit';
 
 import api from '../../services/api.js';
 
@@ -15,24 +18,38 @@ const initialState = {
   saveLoading: false,
   updateLoading: false,
   deleteLoading: false,
+  deleteAllLoading: false,
 
   uploadProgress: 0,
   error: null,
 };
 
 function getErrorMessage(error, fallback) {
-  return error.response?.data?.message || error.message || fallback;
+  return (
+    error.response?.data?.message ||
+    error.message ||
+    fallback
+  );
 }
 
 export const fetchReports = createAsyncThunk(
   'reports/fetchReports',
-  async ({ page = 1, limit = 10 } = {}, { rejectWithValue }) => {
+  async (
+    { page = 1, limit = 10 } = {},
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await api.get(`/reports?page=${page}&limit=${limit}`);
+      const response = await api.get(
+        `/reports?page=${page}&limit=${limit}`
+      );
+
       return response.data?.data || {};
     } catch (error) {
       return rejectWithValue(
-        getErrorMessage(error, 'Could not load your saved reports.')
+        getErrorMessage(
+          error,
+          'Could not load your saved reports.'
+        )
       );
     }
   }
@@ -42,11 +59,21 @@ export const fetchReportById = createAsyncThunk(
   'reports/fetchReportById',
   async (reportId, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/reports/${reportId}`);
-      return response.data?.data?.report || response.data?.report || null;
+      const response = await api.get(
+        `/reports/${reportId}`
+      );
+
+      return (
+        response.data?.data?.report ||
+        response.data?.report ||
+        null
+      );
     } catch (error) {
       return rejectWithValue(
-        getErrorMessage(error, 'Could not load this report.')
+        getErrorMessage(
+          error,
+          'Could not load this report.'
+        )
       );
     }
   }
@@ -56,33 +83,42 @@ export const uploadDataset = createAsyncThunk(
   'reports/uploadDataset',
   async (file, { dispatch, rejectWithValue }) => {
     const formData = new FormData();
+
     formData.append('dataset', file);
 
     try {
-      const response = await api.post('/reports/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        onUploadProgress: (progressEvent) => {
-          if (!progressEvent.total) {
-            dispatch(setUploadProgress(50));
-            return;
-          }
+      const response = await api.post(
+        '/reports/upload',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          onUploadProgress: (progressEvent) => {
+            if (!progressEvent.total) {
+              dispatch(setUploadProgress(50));
+              return;
+            }
 
-          const percent = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
+            const percent = Math.round(
+              (progressEvent.loaded * 100) /
+              progressEvent.total
+            );
 
-          dispatch(setUploadProgress(percent));
-        },
-      });
+            dispatch(setUploadProgress(percent));
+          },
+        }
+      );
 
       dispatch(setUploadProgress(100));
 
       return response.data?.data || null;
     } catch (error) {
       return rejectWithValue(
-        getErrorMessage(error, 'Upload failed. Check the file and try again.')
+        getErrorMessage(
+          error,
+          'Upload failed. Check the file and try again.'
+        )
       );
     }
   }
@@ -90,7 +126,16 @@ export const uploadDataset = createAsyncThunk(
 
 export const saveReport = createAsyncThunk(
   'reports/saveReport',
-  async ({ title, file, analysis, tags = [], descriptionCategory = 'other' }, { rejectWithValue }) => {
+  async (
+    {
+      title,
+      file,
+      analysis,
+      tags = [],
+      descriptionCategory = 'other',
+    },
+    { rejectWithValue }
+  ) => {
     try {
       const response = await api.post('/reports', {
         title,
@@ -100,10 +145,17 @@ export const saveReport = createAsyncThunk(
         analysis,
       });
 
-      return response.data?.data?.report || response.data?.report || null;
+      return (
+        response.data?.data?.report ||
+        response.data?.report ||
+        null
+      );
     } catch (error) {
       return rejectWithValue(
-        getErrorMessage(error, 'Could not save the report. Please try again.')
+        getErrorMessage(
+          error,
+          'Could not save the report. Please try again.'
+        )
       );
     }
   }
@@ -111,13 +163,27 @@ export const saveReport = createAsyncThunk(
 
 export const updateReport = createAsyncThunk(
   'reports/updateReport',
-  async ({ reportId, updates }, { rejectWithValue }) => {
+  async (
+    { reportId, updates },
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await api.put(`/reports/${reportId}`, updates);
-      return response.data?.data?.report || response.data?.report || null;
+      const response = await api.put(
+        `/reports/${reportId}`,
+        updates
+      );
+
+      return (
+        response.data?.data?.report ||
+        response.data?.report ||
+        null
+      );
     } catch (error) {
       return rejectWithValue(
-        getErrorMessage(error, 'Could not update the report.')
+        getErrorMessage(
+          error,
+          'Could not update the report.'
+        )
       );
     }
   }
@@ -131,7 +197,35 @@ export const deleteReport = createAsyncThunk(
       return reportId;
     } catch (error) {
       return rejectWithValue(
-        getErrorMessage(error, 'Could not delete the report.')
+        getErrorMessage(
+          error,
+          'Could not delete the report.'
+        )
+      );
+    }
+  }
+);
+
+export const deleteAllReports = createAsyncThunk(
+  'reports/deleteAllReports',
+  async ({ name, password }, { rejectWithValue }) => {
+    try {
+      const response = await api.delete('/reports', {
+        data: {
+          name,
+          password,
+        },
+      });
+
+      return response.data?.data || {
+        deletedReports: 0,
+      };
+    } catch (error) {
+      return rejectWithValue(
+        getErrorMessage(
+          error,
+          'Could not delete all reports.'
+        )
       );
     }
   }
@@ -144,19 +238,33 @@ const reportsSlice = createSlice({
     clearReportsError: (state) => {
       state.error = null;
     },
+
     clearUploadPreview: (state) => {
       state.uploadPreview = null;
       state.savedReport = null;
       state.uploadProgress = 0;
       state.error = null;
     },
+
     clearSelectedReport: (state) => {
       state.selectedReport = null;
       state.error = null;
     },
+
     clearSavedReport: (state) => {
       state.savedReport = null;
     },
+
+    clearReportsState: (state) => {
+      state.reports = [];
+      state.pagination = null;
+      state.selectedReport = null;
+      state.uploadPreview = null;
+      state.savedReport = null;
+      state.uploadProgress = 0;
+      state.error = null;
+    },
+
     setUploadProgress: (state, action) => {
       state.uploadProgress = action.payload;
     },
@@ -167,29 +275,43 @@ const reportsSlice = createSlice({
         state.listLoading = true;
         state.error = null;
       })
-      .addCase(fetchReports.fulfilled, (state, action) => {
-        state.listLoading = false;
-        state.reports = action.payload.reports || [];
-        state.pagination = action.payload.pagination || null;
-      })
-      .addCase(fetchReports.rejected, (state, action) => {
-        state.listLoading = false;
-        state.error = action.payload;
-      })
+      .addCase(
+        fetchReports.fulfilled,
+        (state, action) => {
+          state.listLoading = false;
+          state.reports =
+            action.payload.reports || [];
+          state.pagination =
+            action.payload.pagination || null;
+        }
+      )
+      .addCase(
+        fetchReports.rejected,
+        (state, action) => {
+          state.listLoading = false;
+          state.error = action.payload;
+        }
+      )
 
       .addCase(fetchReportById.pending, (state) => {
         state.detailLoading = true;
         state.error = null;
         state.selectedReport = null;
       })
-      .addCase(fetchReportById.fulfilled, (state, action) => {
-        state.detailLoading = false;
-        state.selectedReport = action.payload;
-      })
-      .addCase(fetchReportById.rejected, (state, action) => {
-        state.detailLoading = false;
-        state.error = action.payload;
-      })
+      .addCase(
+        fetchReportById.fulfilled,
+        (state, action) => {
+          state.detailLoading = false;
+          state.selectedReport = action.payload;
+        }
+      )
+      .addCase(
+        fetchReportById.rejected,
+        (state, action) => {
+          state.detailLoading = false;
+          state.error = action.payload;
+        }
+      )
 
       .addCase(uploadDataset.pending, (state) => {
         state.uploadLoading = true;
@@ -198,70 +320,127 @@ const reportsSlice = createSlice({
         state.savedReport = null;
         state.error = null;
       })
-      .addCase(uploadDataset.fulfilled, (state, action) => {
-        state.uploadLoading = false;
-        state.uploadPreview = action.payload;
-        state.uploadProgress = 100;
-      })
-      .addCase(uploadDataset.rejected, (state, action) => {
-        state.uploadLoading = false;
-        state.error = action.payload;
-      })
+      .addCase(
+        uploadDataset.fulfilled,
+        (state, action) => {
+          state.uploadLoading = false;
+          state.uploadPreview = action.payload;
+          state.uploadProgress = 100;
+        }
+      )
+      .addCase(
+        uploadDataset.rejected,
+        (state, action) => {
+          state.uploadLoading = false;
+          state.error = action.payload;
+        }
+      )
 
       .addCase(saveReport.pending, (state) => {
         state.saveLoading = true;
         state.error = null;
       })
-      .addCase(saveReport.fulfilled, (state, action) => {
-        state.saveLoading = false;
-        state.savedReport = action.payload;
+      .addCase(
+        saveReport.fulfilled,
+        (state, action) => {
+          state.saveLoading = false;
+          state.savedReport = action.payload;
 
-        if (action.payload) {
-          state.reports = [action.payload, ...state.reports];
+          if (action.payload) {
+            state.reports = [
+              action.payload,
+              ...state.reports,
+            ];
+          }
         }
-      })
-      .addCase(saveReport.rejected, (state, action) => {
-        state.saveLoading = false;
-        state.error = action.payload;
-      })
+      )
+      .addCase(
+        saveReport.rejected,
+        (state, action) => {
+          state.saveLoading = false;
+          state.error = action.payload;
+        }
+      )
 
       .addCase(updateReport.pending, (state) => {
         state.updateLoading = true;
         state.error = null;
       })
-      .addCase(updateReport.fulfilled, (state, action) => {
-        state.updateLoading = false;
-        state.selectedReport = action.payload;
+      .addCase(
+        updateReport.fulfilled,
+        (state, action) => {
+          state.updateLoading = false;
+          state.selectedReport = action.payload;
 
-        if (action.payload?._id) {
-          state.reports = state.reports.map((report) =>
-            report._id === action.payload._id ? action.payload : report
-          );
+          if (action.payload?._id) {
+            state.reports = state.reports.map(
+              (report) =>
+                report._id === action.payload._id
+                  ? action.payload
+                  : report
+            );
+          }
         }
-      })
-      .addCase(updateReport.rejected, (state, action) => {
-        state.updateLoading = false;
-        state.error = action.payload;
-      })
+      )
+      .addCase(
+        updateReport.rejected,
+        (state, action) => {
+          state.updateLoading = false;
+          state.error = action.payload;
+        }
+      )
 
       .addCase(deleteReport.pending, (state) => {
         state.deleteLoading = true;
         state.error = null;
       })
-      .addCase(deleteReport.fulfilled, (state, action) => {
-        state.deleteLoading = false;
-        state.reports = state.reports.filter(
-          (report) => report._id !== action.payload
-        );
+      .addCase(
+        deleteReport.fulfilled,
+        (state, action) => {
+          state.deleteLoading = false;
 
-        if (state.selectedReport?._id === action.payload) {
-          state.selectedReport = null;
+          state.reports = state.reports.filter(
+            (report) =>
+              report._id !== action.payload
+          );
+
+          if (
+            state.selectedReport?._id ===
+            action.payload
+          ) {
+            state.selectedReport = null;
+          }
         }
+      )
+      .addCase(
+        deleteReport.rejected,
+        (state, action) => {
+          state.deleteLoading = false;
+          state.error = action.payload;
+        }
+      )
+
+      .addCase(deleteAllReports.pending, (state) => {
+        state.deleteAllLoading = true;
+        state.error = null;
       })
-      .addCase(deleteReport.rejected, (state, action) => {
-        state.deleteLoading = false;
-        state.error = action.payload;
-      });
+      .addCase(
+        deleteAllReports.fulfilled,
+        (state) => {
+          state.deleteAllLoading = false;
+          state.reports = [];
+          state.pagination = null;
+          state.selectedReport = null;
+          state.savedReport = null;
+        }
+      )
+      .addCase(
+        deleteAllReports.rejected,
+        (state, action) => {
+          state.deleteAllLoading = false;
+          state.error = action.payload;
+        }
+      );
   },
 });
 
@@ -270,6 +449,7 @@ export const {
   clearUploadPreview,
   clearSelectedReport,
   clearSavedReport,
+  clearReportsState,
   setUploadProgress,
 } = reportsSlice.actions;
 

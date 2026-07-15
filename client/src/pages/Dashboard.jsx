@@ -226,19 +226,6 @@ function Dashboard() {
             to="/reports"
             actionLabel="Open reports"
           />
-
-          <div className="rounded-3xl border border-sky-400/20 bg-sky-500/10 p-6 shadow-xl shadow-slate-950/20">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-sky-100">MVP focus</h2>
-                <p className="mt-2 text-sm leading-6 text-sky-100/80">
-                  DataSea focuses on structured datasets first. PDF extraction and custom chart building should stay deferred until the report flow is stable.
-                </p>
-              </div>
-
-              <StatusBadge variant="info">Stable core</StatusBadge>
-            </div>
-          </div>
         </aside>
       </section>
     </AppLayout>

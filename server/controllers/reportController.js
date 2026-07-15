@@ -1,5 +1,6 @@
 const path = require('path');
 
+const User = require('../models/User');
 const AnalysisReport = require('../models/AnalysisReport');
 const asyncHandler = require('../utils/asyncHandler');
 const { parseUploadedFile } = require('../utils/fileParser');
@@ -10,6 +11,57 @@ const {
   getPaginationOptions,
   buildPaginationMeta,
 } = require('../utils/pagination');
+
+const normalizeName = (value) => {
+  return String(value || '').trim().toLowerCase();
+};
+
+const verifyUserConfirmation = async ({
+  userId,
+  submittedName,
+  password,
+}) => {
+  if (!submittedName || !password) {
+    return {
+      success: false,
+      status: 400,
+      message: 'Account name and password are required.',
+    };
+  }
+
+  const user = await User.findById(userId).select('+password');
+
+  if (!user) {
+    return {
+      success: false,
+      status: 404,
+      message: 'User account not found.',
+    };
+  }
+
+  if (normalizeName(submittedName) !== normalizeName(user.name)) {
+    return {
+      success: false,
+      status: 400,
+      message: 'The submitted account name does not match.',
+    };
+  }
+
+  const passwordMatches = await user.matchPassword(password);
+
+  if (!passwordMatches) {
+    return {
+      success: false,
+      status: 401,
+      message: 'The submitted password is incorrect.',
+    };
+  }
+
+  return {
+    success: true,
+    user,
+  };
+};
 
 const uploadAndParseReport = asyncHandler(async (req, res) => {
   const parsedFile = await parseUploadedFile(req.file);
@@ -46,16 +98,27 @@ const uploadAndParseReport = asyncHandler(async (req, res) => {
 });
 
 const buildFileRetentionDate = () => {
-  const retentionDays = Number(process.env.FILE_RETENTION_DAYS || 7);
+  const retentionDays = Number(
+    process.env.FILE_RETENTION_DAYS || 7
+  );
+
   const expiresAt = new Date();
 
-  expiresAt.setDate(expiresAt.getDate() + retentionDays);
+  expiresAt.setDate(
+    expiresAt.getDate() + retentionDays
+  );
 
   return expiresAt;
 };
 
 const saveReport = asyncHandler(async (req, res) => {
-  const { title, file, analysis, tags = [], descriptionCategory = '' } = req.body;
+  const {
+    title,
+    file,
+    analysis,
+    tags = [],
+    descriptionCategory = '',
+  } = req.body;
 
   const report = await AnalysisReport.create({
     title,
@@ -108,6 +171,7 @@ const getMyReports = asyncHandler(async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit),
+
     AnalysisReport.countDocuments(filter),
   ]);
 
@@ -116,7 +180,11 @@ const getMyReports = asyncHandler(async (req, res) => {
     message: 'Reports retrieved successfully',
     data: {
       reports,
-      pagination: buildPaginationMeta({ page, limit, total }),
+      pagination: buildPaginationMeta({
+        page,
+        limit,
+        total,
+      }),
     },
   });
 });
@@ -156,7 +224,8 @@ const updateReport = asyncHandler(async (req, res) => {
   }
 
   if (req.body.descriptionCategory !== undefined) {
-    allowedUpdates.descriptionCategory = req.body.descriptionCategory;
+    allowedUpdates.descriptionCategory =
+      req.body.descriptionCategory;
   }
 
   const report = await AnalysisReport.findOneAndUpdate(
@@ -220,6 +289,44 @@ const softDeleteReport = asyncHandler(async (req, res) => {
   });
 });
 
+const softDeleteAllReports = asyncHandler(async (req, res) => {
+  const { name, password } = req.body;
+
+  const verification = await verifyUserConfirmation({
+    userId: req.user._id,
+    submittedName: name,
+    password,
+  });
+
+  if (!verification.success) {
+    return res.status(verification.status).json({
+      success: false,
+      message: verification.message,
+    });
+  }
+
+  const result = await AnalysisReport.updateMany(
+    {
+      owner: req.user._id,
+      isDeleted: false,
+    },
+    {
+      $set: {
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
+    }
+  );
+
+  return res.status(200).json({
+    success: true,
+    message: 'All reports deleted from history.',
+    data: {
+      deletedReports: result.modifiedCount || 0,
+    },
+  });
+});
+
 module.exports = {
   uploadAndParseReport,
   saveReport,
@@ -227,4 +334,5 @@ module.exports = {
   getReportById,
   updateReport,
   softDeleteReport,
+  softDeleteAllReports,
 };

@@ -30,7 +30,12 @@ function readStoredUser() {
 }
 
 function extractUserFromMeResponse(responseData) {
-  return responseData?.data?.user || responseData?.data || responseData?.user || null;
+  return (
+    responseData?.data?.user ||
+    responseData?.data ||
+    responseData?.user ||
+    null
+  );
 }
 
 function extractUserFromAuthResponse(responseData) {
@@ -41,10 +46,20 @@ function extractTokenFromAuthResponse(responseData) {
   return responseData?.data?.token || responseData?.token || null;
 }
 
+function getErrorMessage(error, fallback) {
+  return (
+    error.response?.data?.message ||
+    error.message ||
+    fallback
+  );
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => readStoredUser());
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
+  const [accountDeleteLoading, setAccountDeleteLoading] =
+    useState(false);
 
   const clearSession = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
@@ -69,14 +84,20 @@ export function AuthProvider({ children }) {
 
       try {
         const response = await api.get('/auth/me');
-        const currentUser = extractUserFromMeResponse(response.data);
+        const currentUser = extractUserFromMeResponse(
+          response.data
+        );
 
         if (!currentUser) {
           clearSession();
           return;
         }
 
-        localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
+        localStorage.setItem(
+          USER_KEY,
+          JSON.stringify(currentUser)
+        );
+
         setUser(currentUser);
       } catch {
         clearSession();
@@ -93,12 +114,23 @@ export function AuthProvider({ children }) {
       setAuthError(null);
 
       try {
-        const response = await api.post('/auth/login', { email, password });
-        const token = extractTokenFromAuthResponse(response.data);
-        const userData = extractUserFromAuthResponse(response.data);
+        const response = await api.post('/auth/login', {
+          email,
+          password,
+        });
+
+        const token = extractTokenFromAuthResponse(
+          response.data
+        );
+
+        const userData = extractUserFromAuthResponse(
+          response.data
+        );
 
         if (!token || !userData) {
-          throw new Error('Login response is missing token or user data.');
+          throw new Error(
+            'Login response is missing token or user data.'
+          );
         }
 
         saveSession(userData, token);
@@ -108,10 +140,10 @@ export function AuthProvider({ children }) {
           token,
         };
       } catch (error) {
-        const message =
-          error.response?.data?.message ||
-          error.message ||
-          'Login failed. Please try again.';
+        const message = getErrorMessage(
+          error,
+          'Login failed. Please try again.'
+        );
 
         setAuthError(message);
         throw new Error(message);
@@ -131,11 +163,18 @@ export function AuthProvider({ children }) {
           password,
         });
 
-        const token = extractTokenFromAuthResponse(response.data);
-        const userData = extractUserFromAuthResponse(response.data);
+        const token = extractTokenFromAuthResponse(
+          response.data
+        );
+
+        const userData = extractUserFromAuthResponse(
+          response.data
+        );
 
         if (!token || !userData) {
-          throw new Error('Register response is missing token or user data.');
+          throw new Error(
+            'Register response is missing token or user data.'
+          );
         }
 
         saveSession(userData, token);
@@ -145,10 +184,10 @@ export function AuthProvider({ children }) {
           token,
         };
       } catch (error) {
-        const message =
-          error.response?.data?.message ||
-          error.message ||
-          'Registration failed. Please try again.';
+        const message = getErrorMessage(
+          error,
+          'Registration failed. Please try again.'
+        );
 
         setAuthError(message);
         throw new Error(message);
@@ -157,32 +196,85 @@ export function AuthProvider({ children }) {
     [saveSession]
   );
 
+  const deleteAccount = useCallback(
+    async ({ name, password }) => {
+      setAuthError(null);
+      setAccountDeleteLoading(true);
+
+      try {
+        const response = await api.delete('/auth/account', {
+          data: {
+            name,
+            password,
+          },
+        });
+
+        clearSession();
+
+        return response.data?.data || {};
+      } catch (error) {
+        const message = getErrorMessage(
+          error,
+          'Could not delete the account.'
+        );
+
+        setAuthError(message);
+        throw new Error(message);
+      } finally {
+        setAccountDeleteLoading(false);
+      }
+    },
+    [clearSession]
+  );
+
   const logout = useCallback(() => {
     clearSession();
   }, [clearSession]);
+
+  const clearAuthError = useCallback(() => {
+    setAuthError(null);
+  }, []);
 
   const value = useMemo(
     () => ({
       user,
       loading,
       authError,
+      accountDeleteLoading,
       isAuthenticated: Boolean(user),
       login,
       register,
       logout,
-      clearAuthError: () => setAuthError(null),
+      deleteAccount,
+      clearAuthError,
     }),
-    [user, loading, authError, login, register, logout]
+    [
+      user,
+      loading,
+      authError,
+      accountDeleteLoading,
+      login,
+      register,
+      logout,
+      deleteAccount,
+      clearAuthError,
+    ]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error('useAuth must be used inside AuthProvider');
+    throw new Error(
+      'useAuth must be used inside AuthProvider'
+    );
   }
 
   return context;

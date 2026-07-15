@@ -1,109 +1,106 @@
 import { Link } from 'react-router-dom';
-import StatusBadge from '../common/StatusBadge.jsx';
 
-function formatDate(dateValue) {
-  if (!dateValue) {
-    return 'Unknown date';
+import StatusBadge from '../common/StatusBadge.jsx';
+import formatDate from '../../utils/formatDate.js';
+import formatFileSize from '../../utils/formatFileSize.js';
+
+function formatNumber(value) {
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) {
+    return '0';
   }
 
-  return new Intl.DateTimeFormat('en', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(dateValue));
+  return new Intl.NumberFormat('en').format(number);
 }
 
-function formatFileSize(bytes) {
-  if (!Number.isFinite(bytes)) {
-    return 'Unknown size';
-  }
-
-  if (bytes < 1024) {
-    return `${bytes} B`;
-  }
-
-  if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} KB`;
-  }
-
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+function ReportMetric({ label, value }) {
+  return (
+    <div className="rounded-2xl border border-slate-800/80 bg-slate-900/55 px-4 py-3">
+      <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
+        {label}
+      </p>
+      <p className="mt-1 break-words text-sm font-semibold text-white">
+        {value}
+      </p>
+    </div>
+  );
 }
 
 function ReportCard({ report }) {
   return (
-    <article className="min-w-0 overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/80 p-6 transition hover:border-sky-500/50 hover:bg-slate-950">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <StatusBadge variant="info">
-              {report.fileType?.toUpperCase() || 'DATASET'}
-            </StatusBadge>
+    <article className="group relative min-w-0 overflow-hidden rounded-3xl border border-slate-800/80 bg-slate-950/70 p-5 shadow-xl shadow-slate-950/15 backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:border-sky-400/40 hover:shadow-2xl hover:shadow-sky-950/20 sm:p-6">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(14,165,233,0.07),transparent_22rem)] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
 
-            {report.descriptionCategory && (
-              <StatusBadge>{report.descriptionCategory}</StatusBadge>
-            )}
+      <div className="relative">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge variant="info" showDot>
+                {report.fileType?.toUpperCase() || 'DATASET'}
+              </StatusBadge>
 
-            {report.isOriginalFileAvailable === false && (
-              <StatusBadge variant="warning">File expired</StatusBadge>
-            )}
+              {report.descriptionCategory && (
+                <StatusBadge>{report.descriptionCategory}</StatusBadge>
+              )}
+
+              {report.isOriginalFileAvailable === false && (
+                <StatusBadge variant="warning">File expired</StatusBadge>
+              )}
+            </div>
+
+            <h2 className="mt-4 break-words text-xl font-semibold tracking-tight text-white sm:text-2xl">
+              {report.title || 'Untitled report'}
+            </h2>
+
+            <p className="mt-2 break-all text-sm leading-6 text-slate-400">
+              {report.originalFileName || 'Unknown source file'}
+            </p>
           </div>
 
-          <h2 className="mt-3 break-words text-xl font-semibold text-white">
-            {report.title}
-          </h2>
-
-          <p className="mt-2 break-all text-sm text-slate-400">
-            {report.originalFileName}
-          </p>
+          <Link
+            to={`/reports/${report._id}`}
+            className="inline-flex shrink-0 items-center justify-center rounded-xl bg-sky-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-300"
+          >
+            Open report
+          </Link>
         </div>
 
-        <Link
-          to={`/reports/${report._id}`}
-          className="inline-flex rounded-xl bg-sky-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-300"
-        >
-          Open report
-        </Link>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <ReportMetric
+            label="Rows"
+            value={formatNumber(report.rowCount)}
+          />
+
+          <ReportMetric
+            label="Columns"
+            value={formatNumber(report.columnCount)}
+          />
+
+          <ReportMetric
+            label="File size"
+            value={formatFileSize(report.fileSize)}
+          />
+
+          <ReportMetric
+            label="Created"
+            value={formatDate(report.createdAt)}
+          />
+        </div>
+
+        {report.tags?.length > 0 && (
+          <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-800/80 pt-4">
+            {report.tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full border border-slate-700/80 bg-slate-900/60 px-3 py-1 text-xs font-medium text-slate-300"
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
-
-      <div className="mt-5 grid gap-3 sm:grid-cols-4">
-        <div className="rounded-2xl bg-slate-900 p-3">
-          <p className="text-xs text-slate-500">Rows</p>
-          <p className="mt-1 font-semibold text-white">{report.rowCount ?? 0}</p>
-        </div>
-
-        <div className="rounded-2xl bg-slate-900 p-3">
-          <p className="text-xs text-slate-500">Columns</p>
-          <p className="mt-1 font-semibold text-white">
-            {report.columnCount ?? 0}
-          </p>
-        </div>
-
-        <div className="rounded-2xl bg-slate-900 p-3">
-          <p className="text-xs text-slate-500">File size</p>
-          <p className="mt-1 font-semibold text-white">
-            {formatFileSize(report.fileSize)}
-          </p>
-        </div>
-
-        <div className="rounded-2xl bg-slate-900 p-3">
-          <p className="text-xs text-slate-500">Created</p>
-          <p className="mt-1 font-semibold text-white">
-            {formatDate(report.createdAt)}
-          </p>
-        </div>
-      </div>
-
-      {report.tags?.length > 0 && (
-        <div className="mt-5 flex flex-wrap gap-2">
-          {report.tags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-300"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
     </article>
   );
 }
